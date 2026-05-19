@@ -716,18 +716,6 @@ def aide():
                            logged_in="nom_utilisateur" in session)
 
 
-@app.route("/cheat/<int:montant>")
-def cheat(montant):
-    """Route de triche pour définir manuellement son solde de poissons.
-
-    ⚠️ À SUPPRIMER AVANT TOUT DÉPLOIEMENT EN PRODUCTION.
-    Exemple : GET /cheat/999 → attribue 999 poissons à l'utilisateur connecté.
-    """
-    user_id = session.get("user_id")
-    if not user_id:
-        return "Non connecté", 403
-    modifier_en_bdd("Poissons", f"nbr_poisson = {montant}", f"id_utilisateur = {user_id}")
-    return f"✅ Tu as maintenant {montant} poissons !", 200
 
 
 # ══════════════════════════════════════════════════════════════════
