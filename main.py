@@ -5,6 +5,7 @@ import threading
 from base_de_donnees_fonction import *
 from fonctions import *
 from statistiques import *
+import os
 
 app = Flask(__name__)
 app.secret_key = "cle_secrete_super_random_123"  # ⚠️ À remplacer par une variable d'environnement en production
@@ -734,6 +735,5 @@ def cheat(montant):
 # ══════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    # debug=True active le rechargement automatique et les messages d'erreur détaillés.
-    # ⚠️ Passer debug=False en production.
-    app.run(port=5555, debug=True)
+    port = int(os.environ.get("PORT", 5555))
+    app.run(host="0.0.0.0", port=port, debug=False)
