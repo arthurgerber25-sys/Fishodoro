@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="static\icon.png" type="image/x-icon">
+<title>Fishodoro - Timer Plein Écran</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Segoe UI',sans-serif;
+  min-height:100vh;
+  background: linear-gradient(180deg,#001022,#002244,#003366,#004080);
+  overflow:hidden;
+  color:white;
+}
+
+/* NAVIGATION */
+.nav-bar {
+    position: fixed; top: 2vh; left: 1.2vw;
+    display: flex; flex-direction: column; gap: 1.2vh;
+    z-index: 1500;
+}
+.nav-bar a { text-decoration: none; }
+.nav-btn {
+    padding: 1vh 1.5vw; border-radius: 2.5vh; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white; font-weight: 600; cursor: pointer;
+    transition: 0.3s; display: block; text-align: center; font-size: clamp(11px, 1vw, 15px);
+    white-space: nowrap;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(109,213,250,0.4); }
+.nav-btn.active { background: linear-gradient(135deg, #6DD5FA, #2193b0); }
+
+/* COMPTEUR POISSONS */
+.fish-counter {
+    position: fixed; top: 2vh; right: 2vw;
+    padding: 0.7vh 1.2vw 0.7vh 0.8vw;
+    background: rgba(0,8,35,0.6);
+    backdrop-filter: blur(14px);
+    border-radius: 50px;
+    border: 1px solid rgba(109,213,250,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    z-index: 2000;
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 800;
+    display: flex; align-items: center; gap: 0.5vw;
+    letter-spacing: 0.5px;
+}
+
+/* RAYONS LUMINEUX */
+.ray{
+  position:absolute; top:-50%; width:12vw; height:250%;
+  background: linear-gradient(180deg, rgba(130,220,255,0.2), transparent);
+  transform: rotate(-15deg);
+  animation: rayMove 10s ease-in-out infinite;
+}
+.ray:nth-child(1){left:5%; animation-delay:0s;}
+.ray:nth-child(2){left:25%; animation-delay:2s;}
+.ray:nth-child(3){left:50%; animation-delay:4s;}
+.ray:nth-child(4){left:75%; animation-delay:6s;}
+.ray:nth-child(5){left:90%; animation-delay:3s;}
+@keyframes rayMove{0%,100%{opacity:0.3;transform:rotate(-15deg) translateX(0);}50%{opacity:0.6;transform:rotate(-15deg) translateX(20px);}}
+
+/* BULLES */
+.bubble{
+  position:absolute; bottom:-50px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(130,220,255,0.2));
+  border-radius:50%; animation:bubbleRise linear infinite;
+}
+.bubble:nth-child(6){left:10%; width:2vw; height:2vw; animation-duration:14s;}
+.bubble:nth-child(7){left:35%; width:1.5vw; height:1.5vw; animation-duration:12s; animation-delay:2s;}
+.bubble:nth-child(8){left:55%; width:2.2vw; height:2.2vw; animation-duration:16s; animation-delay:4s;}
+.bubble:nth-child(9){left:80%; width:1.2vw; height:1.2vw; animation-duration:10s; animation-delay:1s;}
+@keyframes bubbleRise{0%{bottom:-50px;opacity:0;}10%{opacity:0.6;}90%{opacity:0.6;}100%{bottom:110%;opacity:0;}}
+
+/* ALGUES */
+.algae{
+  position:absolute; bottom:0; width:1.5vw; height:18vh;
+  background: linear-gradient(to top,#0a8f3b,#34c759);
+  border-radius: 20px 40px 20px 40px;
+  transform-origin: bottom center;
+  animation:sway 4s ease-in-out infinite alternate;
+}
+.algae::before{content:""; position:absolute; bottom:0; left:-0.8vw; width:1.5vw; height:14vh; background:inherit; border-radius:40px 20px 40px 20px; transform-origin:bottom center; animation:swayAlt 3.5s ease-in-out infinite alternate;}
+.algae::after{content:""; position:absolute; bottom:0; left:0.8vw; width:1.1vw; height:12vh; background:inherit; border-radius:30px 20px 30px 20px; transform-origin:bottom center; animation:swayAlt 4.2s ease-in-out infinite alternate;}
+.algae:nth-child(10){left:5%; animation-delay:0s;}
+.algae:nth-child(11){left:20%; animation-delay:0.5s;}
+.algae:nth-child(12){left:35%; animation-delay:1s;}
+.algae:nth-child(13){left:50%; animation-delay:1.2s;}
+.algae:nth-child(14){left:65%; animation-delay:0.7s;}
+.algae:nth-child(15){left:80%; animation-delay:0.3s;}
+@keyframes sway{0%{transform:rotate(-12deg);}50%{transform:rotate(12deg);}100%{transform:rotate(-12deg);}}
+@keyframes swayAlt{0%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}100%{transform:rotate(-8deg);}}
+
+/* POISSONS */
+.fish{
+  position:absolute; width:3vw; height:1.5vw; min-width:25px; min-height:12px;
+  border-radius:20px; animation: swim linear infinite;
+}
+.fish::before{
+  content:""; position:absolute; width:0; height:0;
+  border-top:5px solid transparent; border-bottom:5px solid transparent;
+  border-right:10px solid; top:25%;
+}
+.fish:nth-child(20){top:25%; left:-5vw; background:linear-gradient(135deg,#FFD700,#FFA500); animation-duration:10s; animation-name:swimWave;}
+.fish:nth-child(21){top:60%; left:-8vw; background:linear-gradient(135deg,#FF6347,#FF4500); animation-duration:14s; animation-name:swimWaveReverse;}
+.fish:nth-child(22){top:45%; left:-10vw; background:linear-gradient(135deg,#00BFFF,#1E90FF); animation-duration:12s; animation-name:swimWave;}
+.fish:nth-child(23){top:70%; left:-12vw; background:linear-gradient(135deg,#32CD32,#228B22); animation-duration:16s; animation-name:swimWaveReverse;}
+.fish:nth-child(24){top:35%; left:-9vw; background:linear-gradient(135deg,#FF69B4,#FF1493); animation-duration:13s; animation-name:swimWave;}
+.fish:nth-child(25){top:50%; left:-6vw; background:linear-gradient(135deg,#1E90FF,#00CED1); animation-duration:11s; animation-name:swimWaveReverse;}
+@keyframes swimWave{0%{transform:translateX(0) translateY(0);}50%{transform:translateX(110vw) translateY(-10px);}100%{transform:translateX(220vw) translateY(0);}}
+@keyframes swimWaveReverse{0%{transform:translateX(0) translateY(0);}50%{transform:translateX(110vw) translateY(10px);}100%{transform:translateX(220vw) translateY(0);}}
+
+/* BATEAU */
+.fisherman{
+  width:16vw;
+  height:12vh;
+  position:absolute;
+  bottom:15vh; left: 0.2vw;
+  image-rendering: pixelated;
+  object-fit: contain;
+  object-position: left center;
+  animation: fishermanSway 3s ease-in-out infinite alternate;
+}
+@keyframes fishermanSway{0%{transform:translateY(0);}100%{transform:translateY(-4px);}}
+
+/* TIMER CENTRAL */
+.timer-container{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  background: rgba(255,255,255,0.1); backdrop-filter:blur(25px);
+  border:2px solid rgba(255,255,255,0.25);
+  border-radius:clamp(16px, 2.5vw, 36px);
+  padding:5vh 6vw;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  min-width: clamp(300px, 45vw, 620px);
+}
+.timer-display{
+  font-size:clamp(60px, 12vw, 140px);
+  font-weight:700; color:white; margin-bottom:2vh;
+  font-family:'Courier New', monospace;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.session-label{
+  color: rgba(255,255,255,0.9);
+  font-size:clamp(14px, 1.8vw, 26px);
+  font-weight:600; margin-bottom:2.5vh;
+}
+
+/* BOUTONS DURÉE */
+.duration-btns {
+    display: flex; gap: 0.8vw; justify-content: center; margin-bottom: 2.5vh; flex-wrap: wrap;
+}
+.duration-btn {
+    padding: 0.7vh 1.3vw; border-radius: 2vh;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white;
+    font-size: clamp(12px, 1.1vw, 16px); font-weight: 600; cursor: pointer;
+    transition: 0.2s;
+}
+.duration-btn:hover { background: rgba(255,255,255,0.25); }
+.duration-btn.active { background: linear-gradient(135deg, #6DD5FA, #2193b0); border-color: transparent; }
+
+/* BOUTONS CONTRÔLE */
+.control-btn{
+  padding:1.5vh 3.5vw; border:none; border-radius:1.5vh;
+  font-size:clamp(14px, 1.4vw, 20px); font-weight:600; cursor:pointer;
+  margin:0 0.5vw; transition:0.3s; color:white;
+}
+.btn-start{background: linear-gradient(135deg,#4CAF50,#2e7d32);}
+.btn-pause{background: linear-gradient(135deg,#FFB347,#FF8C42);}
+.btn-stop{background: linear-gradient(135deg,#FF6B6B,#EE5A52);}
+.control-btn:hover{transform:translateY(-2px); filter: brightness(1.1);}
+
+/* BADGE PHASE */
+.phase-badge {
+    display: inline-block;
+    padding: 0.5vh 1.2vw;
+    border-radius: 1.5vh;
+    font-size: clamp(11px, 1vw, 15px);
+    font-weight: 700;
+    margin-bottom: 1.5vh;
+}
+.phase-travail { background: rgba(76,175,80,0.25); color: #4CAF50; border: 1px solid #4CAF50; }
+.phase-pause   { background: rgba(109,213,250,0.2); color: #6DD5FA; border: 1px solid #6DD5FA; }
+    position: fixed; top: 8vh; right: 2vw;
+    background: linear-gradient(135deg, #FFB347, #FF8C42);
+    color: white; font-weight: 800; font-size: clamp(14px, 1.3vw, 18px);
+    padding: 1.2vh 2vw; border-radius: 2vh;
+    box-shadow: 0 4px 20px rgba(255,140,66,0.5);
+    z-index: 9998; opacity: 0;
+    animation: popupFade 3s ease forwards;
+    pointer-events: none;
+}
+@keyframes popupFade {
+    0% { opacity:0; transform:translateY(10px); }
+    15% { opacity:1; transform:translateY(0); }
+    70% { opacity:1; }
+    100% { opacity:0; transform:translateY(-10px); }
+}
+</style>
+</head>
+<body>
+
+<audio id="son" style="display:none">
+    <source src="{{ url_for('static', filename='son_end_timer.mp3') }}" type="audio/mpeg">
+</audio>
+
+<!-- NAVIGATION -->
+<div class="nav-bar">
+    <a href="/accueil" class="nav-btn">Accueil</a>
+    <a href="/stats" class="nav-btn">Stats</a>
+    <a href="/shop" class="nav-btn">Boutique</a>
+    <a href="/equipment" class="nav-btn">Équipement</a>
+    <a href="/timer" class="nav-btn active">Timer</a>
+    <a href="/aide" class="nav-btn">❓ Aide</a>
+</div>
+
+<!-- COMPTEUR POISSONS -->
+<div class="fish-counter">
+    <img src="{{ apparence['lien_image'] }}" alt="poisson"
+         style="width:32px; height:32px; image-rendering:pixelated; object-fit:contain; display:block;">
+    <span id="fish-count">{{ poissons | default(0) }}</span>
+</div>
+
+<!-- RAYONS -->
+<div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+<!-- BULLES -->
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<!-- ALGUES -->
+<div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div>
+<!-- POISSONS -->
+<div class="fish"></div><div class="fish"></div><div class="fish"></div><div class="fish"></div><div class="fish"></div><div class="fish"></div>
+
+
+<!-- TIMER CENTRAL -->
+<div class="timer-container">
+  <div class="timer-display" id="display">{{ '%02d:%02d' | format(temps_restant // 60, temps_restant % 60) }}</div>
+  <span id="phase-badge" class="phase-badge {% if phase == 'travail' %}phase-travail{% else %}phase-pause{% endif %}">
+    {% if phase == 'travail' %}🎣 Travail{% elif phase == 'pause_longue' %}☕ Pause longue{% else %}💧 Pause courte{% endif %}
+  </span>
+  <div class="session-label" id="session-label">Session en cours</div>
+
+  <!-- PÊCHEUR -->
+  <img id="fisherman-anim" class="fisherman" src="{{ url_for('static', filename='frame1_en_position.png') }}" alt="pêcheur">
+
+  <!-- BOUTONS DURÉE -->
+  <div class="duration-btns">
+    <button class="duration-btn active" onclick="changerDuree(30, this)">30 min</button>
+    <button class="duration-btn" onclick="changerDuree(55, this)">55 min</button>
+  </div>
+
+  <div>
+    <button class="control-btn btn-start" onclick="commande('start')">Start</button>
+    <button class="control-btn btn-pause" onclick="commande('pause')">Pause</button>
+    <button class="control-btn btn-stop" onclick="commande('stop')">Stop</button>
+  </div>
+</div>
+
+<script>
+let temps = {{ temps_restant }};
+let enCours = {{ 'true' if en_cours else 'false' }};
+enCours = (enCours === true || enCours === 'true');
+let interval = null;
+let syncInterval = null;
+let dureeActive = {{ 30 if temps_restant <= 1800 else 55 }};
+let phase = "{{ phase | default('travail') }}";
+
+function afficher(t) {
+    if (t === undefined) t = temps;
+    const min = Math.floor(t / 60);
+    const sec = Math.floor(t % 60);
+    document.getElementById('display').innerText =
+        String(min).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+function afficherBadge(p) {
+    const badge = document.getElementById('phase-badge');
+    if (!badge) return;
+    if (p === 'travail') {
+        badge.textContent = '🎣 Travail';
+        badge.className = 'phase-badge phase-travail';
+    } else if (p === 'pause_longue') {
+        badge.textContent = '☕ Pause longue';
+        badge.className = 'phase-badge phase-pause';
+    } else {
+        badge.textContent = '💧 Pause courte';
+        badge.className = 'phase-badge phase-pause';
+    }
+}
+
+function lancerLocal() {
+    if (interval) return;
+    interval = setInterval(() => {
+        if (temps > 0) {
+            temps--;
+            afficher();
+        } else {
+            clearInterval(interval); interval = null;
+            sessionTerminee();
+        }
+    }, 1000);
+}
+
+function stopLocal() { clearInterval(interval); interval = null; }
+
+/* POLLING — synchronise toutes les 3s si le timer local n'est pas actif */
+function demarrerSync() {
+    if (syncInterval) return;
+    syncInterval = setInterval(() => {
+        if (!enCours) syncAvecServeur();
+    }, 3000);
+}
+function stopSync() { clearInterval(syncInterval); syncInterval = null; }
+
+function syncAvecServeur() {
+    fetch('/etat_timer')
+        .then(r => r.json())
+        .then(data => {
+            temps = data.temps_restant;
+            enCours = data.en_cours;
+            phase = data.phase;
+            afficher();
+            afficherBadge(phase);
+            if (enCours && !interval) lancerLocal();
+            const label = document.getElementById('session-label');
+            if (phase !== 'travail') label.textContent = phase === 'pause_longue' ? '☕ Pause longue' : '💧 Pause courte';
+        });
+}
+
+function sessionTerminee() {
+    const audio = document.getElementById('son');
+    audio.play(); audio.volume = 0.8;
+    fetch('/fin_session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ poissons_gagnes: dureeActive === 55 ? 55 : 30 })
+    })
+    .then(res => res.json())
+    .then(data => {
+        phase = data.phase;
+        temps = data.temps_restant;
+        enCours = false;
+        afficher();
+        afficherBadge(phase);
+        const label = document.getElementById('session-label');
+        if (data.c_etait_travail) {
+            document.getElementById('fish-count').textContent = data.nouveau_total;
+            afficherGainPopup(data.poissons_gagnes);
+            label.textContent = phase === 'pause_longue' ? '☕ Pause longue méritée !' : '💧 Petite pause !';
+        } else {
+            label.textContent = '🎣 Prêt à reprendre !';
+        }
+    });
+}
+
+function afficherGainPopup(n) {
+    const popup = document.createElement('div');
+    popup.className = 'fish-gain-popup';
+    popup.textContent = `+${n} 🐟 Poissons gagnés !`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 3200);
+}
+
+function commande(action) {
+    const audio = document.getElementById('son');
+    fetch('/commande', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: action})
+    })
+    .then(res => res.json())
+    .then(data => {
+        temps = data.temps_restant;
+        enCours = data.en_cours;
+        phase = data.phase || phase;
+        afficher();
+        afficherBadge(phase);
+        const label = document.getElementById('session-label');
+        if (action === 'start' && enCours) {
+            lancerLocal(); demarrerSync();
+            label.textContent = 'Session en cours';
+        }
+        if (action === 'pause') { stopLocal(); label.textContent = '⏸ En pause'; }
+        if (action === 'stop')  { stopLocal(); stopSync(); label.textContent = 'Session en cours'; }
+        if (data.poissons !== undefined) document.getElementById('fish-count').textContent = data.poissons;
+    });
+}
+
+function changerDuree(minutes, btn) {
+    dureeActive = minutes;
+    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    stopLocal(); stopSync();
+
+    fetch('/changer_duree', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ duree: minutes })
+    })
+    .then(res => res.json())
+    .then(data => {
+        temps = data.temps_restant;
+        enCours = false;
+        phase = data.phase || 'travail';
+        afficher();
+        afficherBadge(phase);
+        document.getElementById('session-label').textContent = 'Session en cours';
+    });
+}
+
+afficher();
+afficherBadge(phase);
+if (enCours) { lancerLocal(); }
+demarrerSync(); // on poll dès le chargement pour être synchro
+
+/* ── Animation pêcheur pixel art ── */
+(function() {
+    const frames = [
+        "{{ url_for('static', filename='frame1_en_position.png') }}",
+        "{{ url_for('static', filename='frame2_lancer.png') }}",
+        "{{ url_for('static', filename='frame3_affut.png') }}",
+        "{{ url_for('static', filename='frame4_touche.png') }}"
+    ];
+    let fi = 0;
+    const img = document.getElementById('fisherman-anim');
+    if (img) {
+        frames.forEach(src => { const i = new Image(); i.src = src; });
+        setInterval(() => { fi = (fi + 1) % frames.length; img.src = frames[fi]; }, 300);
+    }
+})();
+</script>
+<script>
+/* ── Thème dynamique (fond + algues + poissons de fond) ── */
+(function() {
+    const theme = {{ theme | tojson }};
+    if (!theme || !theme.algue_color) return;
+    const [c1, c2] = theme.algue_color.split(',');
+    document.querySelectorAll('.algae').forEach(el => {
+        el.style.background = 'linear-gradient(to top, ' + c1 + ', ' + c2 + ')';
+    });
+    if (theme.bg_gradient) {
+        document.body.style.background = 'linear-gradient(' + theme.bg_gradient + ')';
+    }
+    const fishEls = document.querySelectorAll('.fish');
+    if (fishEls.length && theme.fish_colors) {
+        fishEls.forEach((el, i) => {
+            const fc = theme.fish_colors[i % theme.fish_colors.length].split(',');
+            el.style.background = 'linear-gradient(135deg, ' + fc[0] + ', ' + fc[1] + ')';
+        });
+    }
+})();
+</script>
+</body>
+</html>

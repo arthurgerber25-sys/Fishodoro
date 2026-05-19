@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="static/icon.png" type="image/x-icon">
+<title>Fishodoro - Boutique</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;min-height:100vh;background:linear-gradient(180deg,#001022,#002244,#003366,#004080);overflow:hidden;color:white;}
+
+.nav-bar{position:fixed;top:2vh;left:1.2vw;display:flex;flex-direction:column;gap:1.2vh;z-index:1500;}
+.nav-bar a{text-decoration:none;}
+.nav-btn{padding:1vh 1.5vw;border-radius:2.5vh;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:white;font-weight:600;cursor:pointer;transition:0.3s;display:block;text-align:center;font-size:clamp(11px,1vw,15px);white-space:nowrap;}
+.nav-btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px);box-shadow:0 6px 20px rgba(109,213,250,0.4);}
+.nav-btn.active{background:linear-gradient(135deg,#6DD5FA,#2193b0);}
+
+.fish-counter{position:fixed;top:2vh;right:2vw;padding:0.7vh 1.2vw 0.7vh 0.8vw;background:rgba(0,8,35,0.6);backdrop-filter:blur(14px);border-radius:50px;border:1px solid rgba(109,213,250,0.3);box-shadow:0 4px 24px rgba(0,0,0,0.4);z-index:2000;font-size:clamp(20px,2vw,28px);font-weight:800;display:flex;align-items:center;gap:0.5vw;}
+
+.ray{position:absolute;top:-50%;width:12vw;height:250%;background:linear-gradient(180deg,rgba(130,220,255,0.2),transparent);transform:rotate(-15deg);animation:rayMove 10s ease-in-out infinite;}
+.ray:nth-child(1){left:5%;}.ray:nth-child(2){left:25%;animation-delay:2s;}.ray:nth-child(3){left:50%;animation-delay:4s;}.ray:nth-child(4){left:75%;animation-delay:6s;}.ray:nth-child(5){left:90%;animation-delay:3s;}
+@keyframes rayMove{0%,100%{opacity:0.3;transform:rotate(-15deg) translateX(0);}50%{opacity:0.6;transform:rotate(-15deg) translateX(20px);}}
+
+.bubble{position:absolute;bottom:-50px;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.8),rgba(130,220,255,0.2));border-radius:50%;animation:bubbleRise linear infinite;}
+.bubble:nth-child(6){left:10%;width:2vw;height:2vw;animation-duration:14s;}.bubble:nth-child(7){left:35%;width:1.5vw;height:1.5vw;animation-duration:12s;animation-delay:2s;}.bubble:nth-child(8){left:55%;width:2.2vw;height:2.2vw;animation-duration:16s;animation-delay:4s;}.bubble:nth-child(9){left:80%;width:1.2vw;height:1.2vw;animation-duration:10s;animation-delay:1s;}
+@keyframes bubbleRise{0%{bottom:-50px;opacity:0;}10%{opacity:0.6;}90%{opacity:0.6;}100%{bottom:110%;opacity:0;}}
+
+.algae{position:absolute;bottom:0;width:1.5vw;height:18vh;background:linear-gradient(to top,#0a8f3b,#34c759);border-radius:20px 40px 20px 40px;transform-origin:bottom center;animation:sway 4s ease-in-out infinite alternate;}
+.algae::before{content:"";position:absolute;bottom:0;left:-0.8vw;width:1.5vw;height:14vh;background:inherit;border-radius:40px 20px 40px 20px;transform-origin:bottom center;animation:swayAlt 3.5s ease-in-out infinite alternate;}
+.algae::after{content:"";position:absolute;bottom:0;left:0.8vw;width:1.1vw;height:12vh;background:inherit;border-radius:30px 20px 30px 20px;transform-origin:bottom center;animation:swayAlt 4.2s ease-in-out infinite alternate;}
+.algae:nth-child(10){left:5%;}.algae:nth-child(11){left:20%;animation-delay:0.5s;}.algae:nth-child(12){left:35%;animation-delay:1s;}.algae:nth-child(13){left:50%;animation-delay:1.2s;}.algae:nth-child(14){left:65%;animation-delay:0.7s;}.algae:nth-child(15){left:80%;animation-delay:0.3s;}
+@keyframes sway{0%{transform:rotate(-12deg);}100%{transform:rotate(12deg);}}
+@keyframes swayAlt{0%{transform:rotate(-8deg);}100%{transform:rotate(8deg);}}
+
+.fish-bg{position:absolute;width:3vw;height:1.5vw;min-width:25px;min-height:12px;border-radius:20px;animation:swimWave linear infinite;}
+.fish-bg:nth-child(20){top:25%;left:-5vw;animation-duration:10s;}.fish-bg:nth-child(21){top:60%;left:-8vw;animation-duration:14s;animation-name:swimWaveR;}.fish-bg:nth-child(22){top:45%;left:-10vw;animation-duration:12s;}.fish-bg:nth-child(23){top:70%;left:-12vw;animation-duration:16s;animation-name:swimWaveR;}.fish-bg:nth-child(24){top:35%;left:-9vw;animation-duration:13s;}
+@keyframes swimWave{0%{transform:translateX(0);}100%{transform:translateX(130vw);}}
+@keyframes swimWaveR{0%{transform:translateX(0) translateY(0);}50%{transform:translateX(65vw) translateY(10px);}100%{transform:translateX(130vw) translateY(0);}}
+
+.screen-title{position:absolute;top:7vh;width:100%;text-align:center;font-size:clamp(24px,3.5vw,52px);font-weight:700;text-shadow:0 4px 20px rgba(0,0,0,0.5);z-index:10;}
+
+.tabs-container{position:absolute;top:16vh;left:50%;transform:translateX(-50%);display:flex;gap:1vw;z-index:20;}
+.tab-btn{padding:0.8vh 2.5vw;border-radius:2vh;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:clamp(12px,1.1vw,16px);font-weight:600;cursor:pointer;transition:0.25s;}
+.tab-btn:hover{background:rgba(255,255,255,0.15);color:white;}
+.tab-btn.active{background:linear-gradient(135deg,#6DD5FA,#2193b0);color:white;border-color:transparent;}
+
+.shop-container{position:absolute;top:54%;left:50%;transform:translate(-50%,-50%);display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(130px,14vw,200px),1fr));gap:2vw;width:clamp(500px,75vw,900px);max-height:55vh;overflow-y:visible;padding:0.5vh 0.5vw;scrollbar-width:thin;scrollbar-color:rgba(109,213,250,0.4) transparent;}
+.shop-container::-webkit-scrollbar{width:5px;}.shop-container::-webkit-scrollbar-track{background:transparent;}.shop-container::-webkit-scrollbar-thumb{background:rgba(109,213,250,0.4);border-radius:10px;}
+
+.shop-item{background:rgba(255,255,255,0.1);backdrop-filter:blur(15px);border:2px solid rgba(255,255,255,0.15);border-radius:clamp(12px,1.5vw,22px);padding:clamp(15px,2.5vh,30px) clamp(12px,1.5vw,25px);text-align:center;transition:all 0.3s ease;cursor:pointer;position:relative;}
+.shop-item:hover{transform:translateY(-8px);box-shadow:0 15px 40px rgba(0,0,0,0.4);}
+.shop-item.owned{border-color:#4CAF50;box-shadow:0 0 15px rgba(76,175,80,0.3);}
+.shop-item.cant-afford{opacity:0.5;cursor:not-allowed;}
+.shop-item.cant-afford:hover{transform:none;box-shadow:none;}
+
+.owned-badge{position:absolute;top:0.7vh;right:0.7vw;background:#4CAF50;color:white;font-size:clamp(9px,0.75vw,11px);font-weight:800;padding:0.2vh 0.6vw;border-radius:1vh;}
+.item-icon-wrap{width:100%;min-height:70px;display:flex;align-items:center;justify-content:center;margin-bottom:1.5vh;}
+.item-name{color:white;font-size:clamp(12px,1.1vw,17px);font-weight:600;margin-bottom:0.7vh;}
+.item-price{color:#FFB347;font-size:clamp(13px,1.2vw,19px);font-weight:700;}
+.item-price.owned-text{color:#4CAF50;}
+
+.theme-preview{width:100%;height:40px;border-radius:0.8vh;margin-bottom:1vh;display:flex;gap:4px;overflow:hidden;}
+.theme-swatch{height:100%;flex:1;border-radius:4px;}
+
+.notif-popup{position:fixed;bottom:5vh;left:50%;transform:translateX(-50%);padding:1.2vh 2.5vw;border-radius:2vh;color:white;font-weight:700;font-size:clamp(13px,1.1vw,17px);z-index:9999;opacity:0;animation:notifFade 3s ease forwards;pointer-events:none;}
+.notif-popup.success{background:linear-gradient(135deg,#4CAF50,#2e7d32);}
+.notif-popup.error{background:linear-gradient(135deg,#FF6B6B,#c0392b);}
+@keyframes notifFade{0%{opacity:0;transform:translateX(-50%) translateY(10px);}15%{opacity:1;transform:translateX(-50%) translateY(0);}70%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-10px);}}
+</style>
+</head>
+<body>
+
+<div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div>
+<div class="fish-bg"></div><div class="fish-bg"></div><div class="fish-bg"></div><div class="fish-bg"></div><div class="fish-bg"></div>
+
+<div class="nav-bar">
+    <a href="/accueil" class="nav-btn">Accueil</a>
+    <a href="/stats" class="nav-btn">Stats</a>
+    <a href="/shop" class="nav-btn active">Boutique</a>
+    <a href="/equipment" class="nav-btn">Équipement</a>
+    <a href="/timer" class="nav-btn">Timer</a>
+    <a href="/aide" class="nav-btn">❓ Aide</a>
+</div>
+
+<div class="fish-counter">
+    <img src="{{ apparence['lien_image'] }}" alt="poisson"
+         style="width:32px; height:32px; image-rendering:pixelated; object-fit:contain; display:block;">
+    <span id="fish-count">{{ poissons | default(0) }}</span>
+</div>
+
+<h1 class="screen-title">Boutique Marine 🛒</h1>
+
+<div class="tabs-container">
+    <button class="tab-btn active" onclick="showTab('skins', this)">🐟 Skins</button>
+    <button class="tab-btn" onclick="showTab('themes', this)">🌊 Thèmes</button>
+</div>
+
+<!-- SKINS -->
+<div class="shop-container" id="tab-skins">
+    {% for item in items_skins %}
+    {% set owned = item.owned %}
+    {% set peut_acheter = (poissons | default(0)) >= item.prix %}
+    <div class="shop-item {% if owned %}owned{% elif not peut_acheter %}cant-afford{% endif %}"
+         id="skin-{{ item.id }}"
+         onclick="acheter({{ item.id }}, {{ item.prix }}, 'skin')">
+        {% if owned %}<div class="owned-badge">✓ Possédé</div>{% endif %}
+        <div class="item-icon-wrap">
+            <img src="{{ item.lien }}"
+                 style="width:{{ item.largeur }}px;height:{{ item.hauteur }}px;image-rendering:pixelated;object-fit:contain;transform:scale({{ item.zoom }});"
+                 alt="{{ item.nom }}">
+        </div>
+        <div class="item-name">{{ item.nom | replace('_', ' ') | title }}</div>
+        <div class="item-price {% if owned %}owned-text{% endif %}">
+            {% if owned %}✅ Débloqué{% elif item.prix == 0 %}Gratuit{% else %}🐟 {{ item.prix }}{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- THÈMES -->
+<div class="shop-container" id="tab-themes" style="display:none;">
+    {% for item in items_themes %}
+    {% set owned = item.owned %}
+    {% set peut_acheter = (poissons | default(0)) >= item.prix %}
+    <div class="shop-item {% if owned %}owned{% elif not peut_acheter %}cant-afford{% endif %}"
+         id="theme-{{ item.id }}"
+         onclick="acheter({{ item.id }}, {{ item.prix }}, 'theme')">
+        {% if owned %}<div class="owned-badge">✓ Possédé</div>{% endif %}
+        <div class="theme-preview">
+            {% for col in item.fish_colors[:4] %}
+            <div class="theme-swatch" style="background: linear-gradient(135deg, {{ col }});"></div>
+            {% endfor %}
+        </div>
+        <div class="item-name">{{ item.label }}</div>
+        <div class="item-price {% if owned %}owned-text{% endif %}">
+            {% if owned %}✅ Débloqué{% elif item.prix == 0 %}Gratuit{% else %}🐟 {{ item.prix }}{% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+let poissons = {{ poissons | default(0) }};
+
+function showTab(tab, btn) {
+    document.getElementById('tab-skins').style.display = tab === 'skins' ? 'grid' : 'none';
+    document.getElementById('tab-themes').style.display = tab === 'themes' ? 'grid' : 'none';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function acheter(itemId, prix, category) {
+    const prefix = category === 'skin' ? 'skin-' : 'theme-';
+    const el = document.getElementById(prefix + itemId);
+    if (!el) return;
+    if (el.classList.contains('owned')) {
+        notif('Tu possèdes déjà cet article !', 'error'); return;
+    }
+    if (poissons < prix && prix > 0) {
+        notif('Pas assez de 🐟 poissons !', 'error'); return;
+    }
+    fetch('/acheter', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ item_id: itemId, prix: prix, category: category })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            poissons = data.nouveau_total;
+            document.getElementById('fish-count').textContent = poissons;
+            el.classList.add('owned');
+            el.classList.remove('cant-afford');
+            const priceEl = el.querySelector('.item-price');
+            priceEl.textContent = '✅ Débloqué';
+            priceEl.classList.add('owned-text');
+            const badge = document.createElement('div');
+            badge.className = 'owned-badge'; badge.textContent = '✓ Possédé';
+            el.appendChild(badge);
+            // Griser les items trop chers
+            document.querySelectorAll('.shop-item:not(.owned)').forEach(item => {
+                const priceText = item.querySelector('.item-price')?.textContent || '';
+                const match = priceText.match(/\d+/);
+                if (match) {
+                    item.classList.toggle('cant-afford', parseInt(match[0]) > poissons);
+                }
+            });
+            notif(`🎉 ${category === 'theme' ? 'Thème' : 'Skin'} débloqué !`, 'success');
+        } else {
+            notif(data.message || 'Erreur lors de l\'achat', 'error');
+        }
+    })
+    .catch(() => notif('Erreur de connexion', 'error'));
+}
+
+function notif(msg, type) {
+    const p = document.createElement('div');
+    p.className = `notif-popup ${type}`;
+    p.textContent = msg;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3200);
+}
+
+// Appliquer couleurs thème courant
+(function() {
+    const theme = {{ theme | tojson }};
+    if (!theme || !theme.algue_color) return;
+    const [c1, c2] = theme.algue_color.split(',');
+    document.querySelectorAll('.algae').forEach(el => {
+        el.style.background = `linear-gradient(to top, ${c1}, ${c2})`;
+    });
+    document.querySelectorAll('.fish-bg').forEach((el, i) => {
+        const fc = theme.fish_colors[i % theme.fish_colors.length].split(',');
+        el.style.background = `linear-gradient(135deg, ${fc[0]}, ${fc[1]})`;
+    });
+    if (theme.bg_gradient) {
+        document.body.style.background = `linear-gradient(${theme.bg_gradient})`;
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="static/icon.png" type="image/x-icon">
+<title>Fishodoro - Aide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Segoe UI',sans-serif;
+  min-height:100vh;
+  background: linear-gradient(180deg,#001022,#002244,#003366,#004080);
+  color:white;
+  overflow-y:auto; overflow-x:hidden;
+}
+
+/* NAVIGATION */
+.nav-bar{position:fixed;top:2vh;left:1.2vw;display:flex;flex-direction:column;gap:1.2vh;z-index:1500;}
+.nav-bar a{text-decoration:none;}
+.nav-btn{padding:1vh 1.5vw;border-radius:2.5vh;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:white;font-weight:600;cursor:pointer;transition:0.3s;display:block;text-align:center;font-size:clamp(11px,1vw,15px);white-space:nowrap;}
+.nav-btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px);box-shadow:0 6px 20px rgba(109,213,250,0.4);}
+.nav-btn.active{background:linear-gradient(135deg,#6DD5FA,#2193b0);}
+
+/* COMPTEUR POISSONS */
+.fish-counter{position:fixed;top:2vh;right:2vw;padding:0.7vh 1.2vw 0.7vh 0.8vw;background:rgba(0,8,35,0.6);backdrop-filter:blur(14px);border-radius:50px;border:1px solid rgba(109,213,250,0.3);box-shadow:0 4px 24px rgba(0,0,0,0.4);z-index:2000;font-size:clamp(20px,2vw,28px);font-weight:800;display:flex;align-items:center;gap:0.5vw;}
+
+/* DÉCORS */
+.ray{position:fixed;top:-50%;width:12vw;height:250%;background:linear-gradient(180deg,rgba(130,220,255,0.12),transparent);transform:rotate(-15deg);animation:rayMove 10s ease-in-out infinite;pointer-events:none;z-index:1;}
+.ray:nth-child(1){left:5%;}.ray:nth-child(2){left:25%;animation-delay:2s;}.ray:nth-child(3){left:50%;animation-delay:4s;}.ray:nth-child(4){left:75%;animation-delay:6s;}.ray:nth-child(5){left:90%;animation-delay:3s;}
+@keyframes rayMove{0%,100%{opacity:0.3;transform:rotate(-15deg) translateX(0);}50%{opacity:0.6;transform:rotate(-15deg) translateX(20px);}}
+
+.bubble{position:fixed;bottom:-50px;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.6),rgba(130,220,255,0.15));border-radius:50%;animation:bubbleRise linear infinite;pointer-events:none;z-index:1;}
+.bubble:nth-child(6){left:10%;width:2vw;height:2vw;animation-duration:14s;}.bubble:nth-child(7){left:35%;width:1.5vw;height:1.5vw;animation-duration:12s;animation-delay:2s;}.bubble:nth-child(8){left:55%;width:2.2vw;height:2.2vw;animation-duration:16s;animation-delay:4s;}.bubble:nth-child(9){left:80%;width:1.2vw;height:1.2vw;animation-duration:10s;animation-delay:1s;}
+@keyframes bubbleRise{0%{bottom:-50px;opacity:0;}10%{opacity:0.6;}90%{opacity:0.6;}100%{bottom:110%;opacity:0;}}
+
+.algae{position:fixed;bottom:0;width:1.5vw;height:14vh;background:linear-gradient(to top,#0a8f3b,#34c759);border-radius:20px 40px 20px 40px;transform-origin:bottom center;animation:sway 4s ease-in-out infinite alternate;pointer-events:none;z-index:1;}
+.algae::before{content:"";position:absolute;bottom:0;left:-0.8vw;width:1.5vw;height:10vh;background:inherit;border-radius:40px 20px;transform-origin:bottom center;animation:swayAlt 3.5s ease-in-out infinite alternate;}
+.algae::after{content:"";position:absolute;bottom:0;left:0.8vw;width:1.1vw;height:9vh;background:inherit;border-radius:30px 20px;transform-origin:bottom center;animation:swayAlt 4.2s ease-in-out infinite alternate;}
+.algae:nth-child(10){left:5%;}.algae:nth-child(11){left:20%;animation-delay:0.5s;}.algae:nth-child(12){left:35%;animation-delay:1s;}.algae:nth-child(13){left:50%;animation-delay:1.2s;}.algae:nth-child(14){left:65%;animation-delay:0.7s;}.algae:nth-child(15){left:80%;animation-delay:0.3s;}
+@keyframes sway{0%{transform:rotate(-12deg);}100%{transform:rotate(12deg);}}
+@keyframes swayAlt{0%{transform:rotate(-8deg);}100%{transform:rotate(8deg);}}
+
+/* CONTENU PRINCIPAL */
+.help-wrapper{
+    position:relative; z-index:10;
+    padding: 13vh clamp(90px,14vw,230px) 8vh;
+    max-width: 1200px; margin: 0 auto;
+}
+
+.help-title {
+    text-align: center;
+    font-size: clamp(28px,4vw,60px);
+    font-weight: 800;
+    margin-bottom: 0.5vh;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.help-subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: clamp(13px,1.1vw,17px);
+    margin-bottom: 5vh;
+}
+
+/* CARDS AIDE */
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(14px,2vw,28px);
+    margin-bottom: 4vh;
+}
+@media (max-width: 900px) {
+    .help-grid { grid-template-columns: 1fr; }
+}
+
+.help-card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: clamp(14px,1.8vw,24px);
+    padding: clamp(18px,3vh,32px) clamp(16px,2vw,28px);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.help-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.35);
+}
+
+.card-icon-title {
+    display: flex; align-items: center; gap: 1vw;
+    margin-bottom: 1.8vh;
+}
+.card-icon {
+    font-size: clamp(22px,3vh,40px);
+    background: rgba(109,213,250,0.15);
+    border: 1px solid rgba(109,213,250,0.3);
+    border-radius: 1vh;
+    width: clamp(40px,5vh,60px); height: clamp(40px,5vh,60px);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.card-title {
+    font-size: clamp(15px,1.5vw,22px);
+    font-weight: 700;
+    color: #6DD5FA;
+}
+.card-body {
+    font-size: clamp(12px,1vw,15px);
+    line-height: 1.7;
+    color: rgba(255,255,255,0.82);
+}
+.card-body ul { padding-left: 1.5em; margin-top: 0.8vh; }
+.card-body li { margin-bottom: 0.5vh; }
+.card-body strong { color: white; }
+.card-body .highlight {
+    display: inline-block;
+    background: rgba(109,213,250,0.15);
+    border: 1px solid rgba(109,213,250,0.25);
+    color: #6DD5FA;
+    padding: 0.1vh 0.6vw;
+    border-radius: 0.6vh;
+    font-weight: 700;
+    font-size: 0.9em;
+}
+
+/* TIMELINE POMODORO */
+.pomo-timeline {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5vw; flex-wrap: wrap; margin-top: 1.5vh;
+}
+.pomo-block {
+    padding: 0.5vh 1.2vw; border-radius: 1.2vh; font-size: clamp(11px,0.9vw,13px); font-weight: 700;
+}
+.pomo-work   { background: rgba(76,175,80,0.3); border:1px solid #4CAF50; color: #4CAF50; }
+.pomo-short  { background: rgba(109,213,250,0.2); border:1px solid #6DD5FA; color: #6DD5FA; }
+.pomo-long   { background: rgba(255,179,71,0.2); border:1px solid #FFB347; color: #FFB347; }
+.pomo-arrow  { color: rgba(255,255,255,0.4); font-size: 1.2em; }
+
+/* TABLE GAINS */
+.gains-table {
+    width: 100%; border-collapse: collapse; margin-top: 1.5vh;
+    font-size: clamp(11px,0.9vw,14px);
+}
+.gains-table th { background: rgba(109,213,250,0.15); color: #6DD5FA; padding: 0.8vh 1vw; text-align: left; font-weight: 700; border-bottom: 1px solid rgba(109,213,250,0.2); }
+.gains-table td { padding: 0.7vh 1vw; border-bottom: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+.gains-table tr:last-child td { border-bottom: none; }
+
+/* FAQ accordion */
+.faq-section { margin-top: 3vh; }
+.faq-title { font-size: clamp(18px,2vw,28px); font-weight: 700; margin-bottom: 2vh; color: #6DD5FA; }
+.faq-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1.2vh; margin-bottom: 1vh; overflow: hidden;
+}
+.faq-question {
+    padding: 1.5vh 1.5vw; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: clamp(12px,1vw,15px); font-weight: 600;
+    transition: background 0.2s;
+}
+.faq-question:hover { background: rgba(255,255,255,0.08); }
+.faq-answer {
+    padding: 0 1.5vw; max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s;
+    font-size: clamp(11px,0.9vw,14px); color: rgba(255,255,255,0.75); line-height: 1.7;
+}
+.faq-item.open .faq-answer { max-height: 200px; padding: 1.2vh 1.5vw; }
+.faq-arrow { transition: transform 0.3s; }
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+/* CTA BOUTON */
+.cta-row {
+    display: flex; justify-content: center; gap: 1.5vw; margin-top: 4vh; flex-wrap: wrap;
+}
+.cta-btn {
+    padding: 1.5vh 3vw; border-radius: 2vh; border: none;
+    font-size: clamp(13px,1.1vw,17px); font-weight: 700;
+    cursor: pointer; text-decoration: none; display: inline-block;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+.cta-primary { background: linear-gradient(135deg,#6DD5FA,#2193b0); color: white; }
+.cta-secondary { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: white; }
+</style>
+</head>
+<body>
+
+<div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div>
+
+<div class="nav-bar">
+    {% if logged_in %}
+    <a href="/accueil" class="nav-btn">Accueil</a>
+    <a href="/stats" class="nav-btn">Stats</a>
+    <a href="/shop" class="nav-btn">Boutique</a>
+    <a href="/equipment" class="nav-btn">Équipement</a>
+    <a href="/timer" class="nav-btn">Timer</a>
+    {% else %}
+    <a href="/" class="nav-btn">Connexion</a>
+    {% endif %}
+    <a href="/aide" class="nav-btn active">❓ Aide</a>
+</div>
+
+{% if logged_in %}
+<div class="fish-counter">
+    <img src="{{ apparence['lien_image'] }}" alt="poisson"
+         style="width:32px; height:32px; image-rendering:pixelated; object-fit:contain; display:block;">
+    <span id="fish-count">{{ poissons | default(0) }}</span>
+</div>
+{% endif %}
+
+<div class="help-wrapper">
+    <h1 class="help-title">🌊 Guide Fishodoro</h1>
+    <p class="help-subtitle">Tout ce que tu dois savoir pour maîtriser ta productivité sous-marine</p>
+
+    <div class="help-grid">
+
+        <!-- PRÉSENTATION -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">🎣</div>
+                <div class="card-title">C'est quoi Fishodoro ?</div>
+            </div>
+            <div class="card-body">
+                <p><strong>Fishodoro</strong> est une application de productivité inspirée de la méthode <strong>Pomodoro</strong>, avec une ambiance aquatique. Le principe est simple :</p>
+                <ul>
+                    <li>Tu travailles par sessions chronométrées</li>
+                    <li>Chaque session terminée te rapporte des 🐟 <strong>poissons</strong></li>
+                    <li>Tu dépenses tes poissons pour personnaliser ton expérience</li>
+                    <li>Tu suis ta progression via les <strong>statistiques</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- POMODORO -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">⏱️</div>
+                <div class="card-title">La méthode Pomodoro</div>
+            </div>
+            <div class="card-body">
+                <p>Fishodoro suit le cycle Pomodoro classique :</p>
+                <div class="pomo-timeline">
+                    <span class="pomo-block pomo-work">🎣 Travail</span>
+                    <span class="pomo-arrow">→</span>
+                    <span class="pomo-block pomo-short">💧 Pause courte (5 min)</span>
+                    <span class="pomo-arrow">→</span>
+                    <span class="pomo-block pomo-work">🎣 Travail</span>
+                    <span class="pomo-arrow">→</span>
+                    <span class="pomo-block pomo-work">...</span>
+                    <span class="pomo-arrow">→</span>
+                    <span class="pomo-block pomo-long">☕ Pause longue (15 min)</span>
+                </div>
+                <p style="margin-top:1.2vh;">Après <strong>4 sessions</strong> de travail d'affilée, une pause longue de 15 min est accordée automatiquement.</p>
+            </div>
+        </div>
+
+        <!-- TIMER -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">🕐</div>
+                <div class="card-title">Utiliser le Timer</div>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li><span class="highlight">30 min</span> ou <span class="highlight">55 min</span> — choisir la durée de session</li>
+                    <li><span class="highlight">▶ Start</span> — démarre ou reprend la session</li>
+                    <li><span class="highlight">⏸ Pause</span> — met en pause sans perdre la progression</li>
+                    <li><span class="highlight">⏹ Stop</span> — arrête et remet à zéro</li>
+                </ul>
+                <p style="margin-top:1vh;">Le timer est <strong>synchronisé</strong> entre la page Accueil et la page Timer plein écran — tu peux basculer librement.</p>
+            </div>
+        </div>
+
+        <!-- POISSONS -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">🐟</div>
+                <div class="card-title">Les Poissons 🐟</div>
+            </div>
+            <div class="card-body">
+                <p>Les poissons sont la monnaie de Fishodoro. Tu en gagnes en terminant des sessions :</p>
+                <table class="gains-table">
+                    <tr><th>Session</th><th>Durée</th><th>Gain</th></tr>
+                    <tr><td>Session courte</td><td>30 minutes</td><td>🐟 30 poissons</td></tr>
+                    <tr><td>Session longue</td><td>55 minutes</td><td>🐟 55 poissons</td></tr>
+                </table>
+                <p style="margin-top:1vh;">Les pauses <strong>ne rapportent pas</strong> de poissons, uniquement les sessions de travail.</p>
+            </div>
+        </div>
+
+        <!-- TÂCHES -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">📋</div>
+                <div class="card-title">Journal de Pêche (Tâches)</div>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Clique sur <span class="highlight">+</span> pour ajouter une nouvelle tâche</li>
+                    <li>Chaque tâche a un <strong>titre</strong>, une <strong>description</strong>, une <strong>date de fin</strong> et une <strong>priorité</strong> (0 à 5)</li>
+                    <li>Clique sur une tâche pour l'ouvrir dans le panneau latéral</li>
+                    <li>Coche <em>"Marquer comme terminée"</em> ou clique 🗑️ pour la supprimer</li>
+                    <li>La couleur de la bordure gauche indique la <strong>priorité</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- BOUTIQUE & ÉQUIPEMENT -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">🛒</div>
+                <div class="card-title">Boutique & Équipement</div>
+            </div>
+            <div class="card-body">
+                <p><strong>Boutique</strong> — achète des <em>skins</em> et des <em>thèmes</em> avec tes poissons.</p>
+                <ul>
+                    <li><strong>Skins</strong> 🐟 : remplace le poisson affiché dans la barre en haut</li>
+                    <li><strong>Thèmes</strong> 🌊 : change les couleurs des algues et des poissons de fond sur toutes les pages</li>
+                </ul>
+                <p style="margin-top:0.8vh;"><strong>Équipement</strong> — parmi ce que tu possèdes, choisis ce que tu actives. Un skin ou thème acheté ne s'équipe pas automatiquement, il faut l'activer ici.</p>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Statistiques</div>
+            </div>
+            <div class="card-body">
+                <p>La page <strong>Stats</strong> affiche 4 graphiques :</p>
+                <ul>
+                    <li><strong>Temps total travaillé</strong> — heures par jour sur 7 jours</li>
+                    <li><strong>Priorités des tâches</strong> — répartition en camembert</li>
+                    <li><strong>Sessions Pomodoro</strong> — cumul de sessions dans le temps</li>
+                    <li><strong>Tâches créées</strong> — cumul de tâches dans le temps</li>
+                </ul>
+                <p style="margin-top:0.8vh;">Les compteurs en haut affichent le <strong>total de ta carrière</strong>.</p>
+            </div>
+        </div>
+
+        <!-- COMPTE -->
+        <div class="help-card">
+            <div class="card-icon-title">
+                <div class="card-icon">👤</div>
+                <div class="card-title">Compte & Sauvegarde</div>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li><strong>Connexion</strong> — retrouve ton compte existant avec nom + mot de passe</li>
+                    <li><strong>Inscription</strong> — crée un nouveau compte (nom unique requis)</li>
+                    <li>Toutes tes données sont sauvegardées en <strong>base de données locale</strong> automatiquement : sessions, tâches, poissons, apparences</li>
+                    <li>Ton skin équipé est mémorisé à chaque connexion</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+        <div class="faq-title">Questions fréquentes</div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+                Est-ce que le timer continue si je change de page ?
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">
+                Oui ! Le timer tourne côté serveur. Si tu navigues vers Stats, Boutique ou Équipement, le timer continue. Quand tu reviens, la page se synchronise automatiquement avec l'état réel.
+            </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+                Que se passe-t-il si je ferme le navigateur pendant une session ?
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">
+                Le timer est géré côté serveur Python. Tant que le serveur tourne, la session continue. Si tu fermes le navigateur, le serveur continue de comptabiliser. Quand tu reviens, la page affichera l'état actuel. Si le serveur s'arrête, la session en cours est perdue.
+            </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+                Pourquoi la priorité 0 est-elle moins urgente que la priorité 5 ?
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">
+                Par convention dans Fishodoro, <strong>0 = pas urgent</strong> et <strong>5 = très urgent</strong>. Les couleurs dans les graphiques et la liste de tâches reflètent cette échelle : du gris (0) au rouge vif (5).
+            </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+                Comment équiper un thème ou un skin acheté ?
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">
+                Acheter ≠ Équiper. Après un achat en Boutique, rends-toi sur la page <strong>Équipement</strong>. Là tu verras tout ce que tu possèdes. Clique sur l'élément pour l'activer — il sera appliqué immédiatement sur toutes les pages.
+            </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-question">
+                Les poissons sont-ils conservés si je me déconnecte ?
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-answer">
+                Oui, ton solde de poissons est sauvegardé en base de données. Il sera restauré à ta prochaine connexion.
+            </div>
+        </div>
+    </div>
+
+    <div class="cta-row">
+        {% if logged_in %}
+        <a href="/accueil" class="cta-btn cta-primary">🎣 Retour à l'accueil</a>
+        <a href="/timer" class="cta-btn cta-secondary">⏱️ Lancer une session</a>
+        {% else %}
+        <a href="/" class="cta-btn cta-primary">🌊 Se connecter</a>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+function toggleFaq(item) {
+    item.classList.toggle('open');
+}
+
+// Appliquer thème si connecté
+(function() {
+    const theme = {{ theme | tojson }};
+    if (!theme || !theme.algue_color) return;
+    const [c1, c2] = theme.algue_color.split(',');
+    document.querySelectorAll('.algae').forEach(el => {
+        el.style.background = `linear-gradient(to top, ${c1}, ${c2})`;
+    });
+    if (theme.bg_gradient) {
+        document.body.style.background = `linear-gradient(${theme.bg_gradient})`;
+    }
+})();
+</script>
+</body>
+</html>

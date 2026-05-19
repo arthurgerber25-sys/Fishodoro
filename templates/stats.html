@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="static\icon.png" type="image/x-icon">
+<title>Fishodoro - Statistiques Complètes</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Segoe UI',sans-serif;
+  min-height:100vh;
+  background: linear-gradient(180deg,#001022,#002244,#003366,#004080);
+  overflow-y:auto; overflow-x:hidden;
+  color:white;
+}
+
+/* ===== GRAPHES MATPLOTLIB → RESPONSIVE ===== */
+/* matplotlib génère des SVG avec width/height fixes en px — on les écrase */
+.chart-wrapper svg {
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* NAVIGATION */
+.nav-bar {
+    position: fixed; top: 2vh; left: 1.2vw;
+    display: flex; flex-direction: column; gap: 1.2vh;
+    z-index: 1500;
+}
+.nav-bar a { text-decoration: none; }
+.nav-btn {
+    padding: 1vh 1.5vw; border-radius: 2.5vh; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white; font-weight: 600; cursor: pointer;
+    transition: 0.3s; display: block; text-align: center; font-size: clamp(11px, 1vw, 15px);
+    white-space: nowrap;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(109,213,250,0.4); }
+.nav-btn.active { background: linear-gradient(135deg, #6DD5FA, #2193b0); }
+
+/* COMPTEUR POISSONS */
+.fish-counter {
+    position: fixed; top: 2vh; right: 2vw;
+    padding: 0.7vh 1.2vw 0.7vh 0.8vw;
+    background: rgba(0,8,35,0.6);
+    backdrop-filter: blur(14px);
+    border-radius: 50px;
+    border: 1px solid rgba(109,213,250,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    z-index: 2000;
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 800;
+    display: flex; align-items: center; gap: 0.5vw;
+    letter-spacing: 0.5px;
+    justify-content: center;
+}
+
+/* RAYONS */
+.ray{position:fixed; top:-50%; width:10vw; height:200%; background:linear-gradient(180deg,rgba(130,220,255,0.15),transparent); transform:rotate(-15deg); animation:rayMove 8s ease-in-out infinite; pointer-events:none; z-index:2;}
+.ray:nth-child(1){left:5%;} .ray:nth-child(2){left:25%; animation-delay:2s;} .ray:nth-child(3){left:50%; animation-delay:4s;} .ray:nth-child(4){left:75%; animation-delay:6s;} .ray:nth-child(5){left:90%; animation-delay:3s;}
+@keyframes rayMove{0%,100%{opacity:0.3;transform:rotate(-15deg) translateX(0);}50%{opacity:0.6;transform:rotate(-15deg) translateX(20px);}}
+
+/* BULLES */
+.bubble{position:fixed; bottom:-50px; background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.8),rgba(130,220,255,0.2)); border-radius:50%; animation:bubbleRise linear infinite; pointer-events:none; z-index:2;}
+.bubble:nth-child(6){left:10%; width:2vw; height:2vw; animation-duration:14s;}
+.bubble:nth-child(7){left:35%; width:1.5vw; height:1.5vw; animation-duration:12s; animation-delay:2s;}
+.bubble:nth-child(8){left:55%; width:2.2vw; height:2.2vw; animation-duration:16s; animation-delay:4s;}
+.bubble:nth-child(9){left:80%; width:1.2vw; height:1.2vw; animation-duration:10s; animation-delay:1s;}
+@keyframes bubbleRise{0%{bottom:-50px;opacity:0;}10%{opacity:0.6;}90%{opacity:0.6;}100%{bottom:110%;opacity:0;}}
+
+/* ALGUES */
+.algae{position:fixed; bottom:0; width:1.5vw; height:14vh; background:linear-gradient(to top,#0a8f3b,#34c759); border-radius:20px 40px 20px 40px; transform-origin:bottom center; animation:sway 4s ease-in-out infinite alternate; pointer-events:none; z-index:2;}
+.algae::before{content:""; position:absolute; bottom:0; left:-0.8vw; width:1.5vw; height:10vh; background:inherit; border-radius:40px 20px 40px 20px; transform-origin:bottom center; animation:swayAlt 3.5s ease-in-out infinite alternate;}
+.algae::after{content:""; position:absolute; bottom:0; left:0.8vw; width:1.1vw; height:9vh; background:inherit; border-radius:30px 20px 30px 20px; transform-origin:bottom center; animation:swayAlt 4.2s ease-in-out infinite alternate;}
+.algae:nth-child(10){left:5%;} .algae:nth-child(11){left:20%; animation-delay:0.5s;} .algae:nth-child(12){left:35%; animation-delay:1s;} .algae:nth-child(13){left:50%; animation-delay:1.2s;} .algae:nth-child(14){left:65%; animation-delay:0.7s;} .algae:nth-child(15){left:80%; animation-delay:0.3s;}
+@keyframes sway{0%{transform:rotate(-12deg);}100%{transform:rotate(12deg);}}
+@keyframes swayAlt{0%{transform:rotate(-8deg);}100%{transform:rotate(8deg);}}
+
+/* TITRE */
+.screen-title{
+  text-align:center;
+  font-size:clamp(24px, 3.5vw, 52px);
+  font-weight:700;
+  padding-top: 12vh;
+  margin-bottom: 4vh;
+  text-shadow:0 4px 20px rgba(0,0,0,0.4);
+  position:relative; z-index:10;
+}
+
+/* LAYOUT */
+.stats-wrapper {
+  position: relative;
+  z-index: 10;
+  padding: 0 clamp(90px, 13vw, 220px) 8vh;
+}
+
+/* GRILLE PRINCIPALE : 2 colonnes pour les grandes cards avec graphe */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(14px, 2vw, 28px);
+}
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .small-cards-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* CARD AVEC GRAPHE */
+.stat-card {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: clamp(12px, 1.5vw, 22px);
+  padding: clamp(16px, 2.5vh, 30px) clamp(14px, 2vw, 26px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  transition: 0.3s;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 15px 50px rgba(0,0,0,0.4); }
+
+/* EN-TÊTE DE CARD */
+.card-header {
+  display: flex; align-items: center;
+  gap: 1vw; margin-bottom: clamp(10px, 2vh, 18px);
+}
+.stat-icon {
+  width: clamp(36px, 4.5vh, 56px); height: clamp(36px, 4.5vh, 56px);
+  background: linear-gradient(135deg, #6DD5FA, #2193b0);
+  border-radius: clamp(8px, 1vw, 14px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(18px, 2.2vh, 30px); flex-shrink: 0;
+}
+.stat-label {
+  color: rgba(255,255,255,0.65);
+  font-size: clamp(11px, 0.85vw, 14px);
+  font-weight: 500; margin-bottom: 0.3vh;
+}
+.stat-value {
+  color: white; font-size: clamp(20px, 2.5vw, 38px); font-weight: 700; line-height: 1;
+}
+
+/* WRAPPER GRAPHE : fond identique au facecolor matplotlib (#284C65) */
+.chart-wrapper {
+  width: 100%;
+  border-radius: clamp(6px, 0.8vw, 12px);
+  overflow: hidden;
+  background: #284C65;
+  /* Pas de max-height, on laisse le SVG définir sa hauteur naturelle */
+}
+
+/* PETITES CARDS (span toute la largeur, 4 colonnes) */
+.small-cards-grid {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(12px, 1.5vw, 22px);
+}
+
+.stat-card-small {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: clamp(12px, 1.5vw, 22px);
+  padding: clamp(14px, 2vh, 24px) clamp(12px, 1.5vw, 20px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  transition: 0.3s;
+}
+.stat-card-small:hover { transform: translateY(-4px); }
+</style>
+</head>
+<body>
+
+<!-- DÉCORS (position:absolute, ne gênent pas le scroll) -->
+<div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div>
+
+<!-- NAVIGATION -->
+<div class="nav-bar">
+    <a href="/accueil" class="nav-btn">Accueil</a>
+    <a href="/stats" class="nav-btn active">Stats</a>
+    <a href="/shop" class="nav-btn">Boutique</a>
+    <a href="/equipment" class="nav-btn">Équipement</a>
+    <a href="/timer" class="nav-btn">Timer</a>
+    <a href="/aide" class="nav-btn">❓ Aide</a>
+</div>
+
+<!-- COMPTEUR POISSONS -->
+<div class="fish-counter">
+    <img src="{{ apparence['lien_image'] }}" alt="poisson"
+         style="width:32px; height:32px; image-rendering:pixelated; object-fit:contain; display:block;">
+    <span id="fish-count">{{ poissons | default(0) }}</span>
+</div>
+
+<h1 class="screen-title">Statistiques</h1>
+
+<div class="stats-wrapper">
+  <div class="stats-grid">
+
+    <!-- GRAPHE 1 : Heures travaillées -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div class="stat-icon">⏱️</div>
+        <div>
+          <div class="stat-label">Temps total travaillé</div>
+          <div class="stat-value">{{ temps_total | safe }}</div>
+        </div>
+      </div>
+      <div class="chart-wrapper">{{ graphe1 | safe }}</div>
+    </div>
+
+    <!-- GRAPHE 2 : Poissons -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div class="stat-icon">✅</div>
+        <div>
+          <div class="stat-label">Proportions des différentes priorités dans l'ensemble de vos tâches</div>
+          <div class="stat-value">‎ ‎ ‎ </div>
+        </div>
+      </div>
+      <div class="chart-wrapper"> {{ graphe2 | safe }} </div>
+    </div>
+
+    <!-- GRAPHE 3 : Sessions Pomodoro -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div class="stat-icon">🍅</div>
+        <div>
+          <div class="stat-label">Sessions Pomodoro</div>
+          <div class="stat-value">{{session_total | safe }}</div>
+        </div>
+      </div>
+      <div class="chart-wrapper">{{ graphe3 | safe }}</div>
+    </div>
+
+    <!-- GRAPHE 4 : Tâches -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div class="stat-icon">✅</div>
+        <div>
+          <div class="stat-label">Tâches créées</div>
+          <div class="stat-value">{{ tache_total | safe }}</div>
+        </div>
+      </div>
+      <div class="chart-wrapper">{{ graphe4 | safe }}</div>
+
+  </div>
+</div>
+
+<script>
+/* ── Thème dynamique (fond + algues) ── */
+(function() {
+    const theme = {{ theme | tojson }};
+    if (!theme || !theme.algue_color) return;
+    const [c1, c2] = theme.algue_color.split(',');
+    document.querySelectorAll('.algae').forEach(el => {
+        el.style.background = 'linear-gradient(to top, ' + c1 + ', ' + c2 + ')';
+    });
+    if (theme.bg_gradient) {
+        document.body.style.background = 'linear-gradient(' + theme.bg_gradient + ')';
+    }
+})();
+</script>
+</body>
+</html>

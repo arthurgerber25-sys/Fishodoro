@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fishodoro - Login</title>
+<link rel="shortcut icon" href="static\icon.png" type="image/x-icon">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(180deg,#001022,#002244,#003366,#004080);
+    color: white;
+    overflow: hidden;
+}
+
+/* ===== RAYONS LUMINEUX ===== */
+.ray { position:absolute; top:-50%; width:150px; height:200%; background: linear-gradient(180deg, rgba(130,220,255,0.2), transparent); transform: rotate(-15deg); animation: rayMove 8s ease-in-out infinite; }
+.ray:nth-child(1){left:10%; animation-delay:0s;}
+.ray:nth-child(2){left:30%; animation-delay:2s;}
+.ray:nth-child(3){left:50%; animation-delay:4s;}
+.ray:nth-child(4){left:70%; animation-delay:6s;}
+@keyframes rayMove{ 0%,100%{opacity:0.3; transform: rotate(-15deg) translateX(0);} 50%{opacity:0.6; transform: rotate(-15deg) translateX(20px);} }
+
+/* ===== BULLES ===== */
+.bubble{ position:absolute; bottom:-50px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(130,220,255,0.2)); border-radius:50%; animation:bubbleRise linear infinite;}
+.bubble:nth-child(5){left:15%; width:30px;height:30px; animation-duration:12s;}
+.bubble:nth-child(6){left:45%; width:20px;height:20px; animation-duration:15s; animation-delay:2s;}
+.bubble:nth-child(7){left:75%; width:25px;height:25px; animation-duration:18s; animation-delay:5s;}
+@keyframes bubbleRise{ 0%{bottom:-50px;opacity:0;} 10%{opacity:0.6;} 90%{opacity:0.6;} 100%{bottom:110%;opacity:0;} }
+
+/* ===== ALGUES ===== */
+.algae { position:absolute; bottom:0; width:20px; height:120px; background: linear-gradient(to top,#0a8f3b,#34c759); border-radius: 20px 40px 20px 40px; transform-origin: bottom center; animation: sway 4s ease-in-out infinite alternate; }
+.algae::before { content:""; position:absolute; bottom:0; left:-10px; width:20px; height:80px; background: inherit; border-radius: 40px 20px 40px 20px; transform-origin: bottom center; animation: swayAlt 3.5s ease-in-out infinite alternate; }
+.algae::after { content:""; position:absolute; bottom:0; left:10px; width:15px; height:70px; background: inherit; border-radius: 30px 20px 30px 20px; transform-origin: bottom center; animation: swayAlt 4.2s ease-in-out infinite alternate; }
+.algae:nth-child(8){left:10%; height:120px; animation-delay:0s;}
+.algae:nth-child(9){left:25%; height:100px; animation-delay:0.5s;}
+.algae:nth-child(10){left:40%; height:130px; animation-delay:1s;}
+.algae:nth-child(11){left:55%; height:110px; animation-delay:1.2s;}
+.algae:nth-child(12){left:70%; height:125px; animation-delay:0.7s;}
+.algae:nth-child(13){left:85%; height:115px; animation-delay:0.3s;}
+@keyframes sway{ 0%{transform: rotate(-10deg);} 50%{transform: rotate(10deg);} 100%{transform: rotate(-10deg);} }
+@keyframes swayAlt{ 0%{transform: rotate(-8deg);} 50%{transform: rotate(8deg);} 100%{transform: rotate(-8deg);} }
+
+/* ===== CARD LOGIN ===== */
+.login-card{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:400px; padding:50px 40px; background:rgba(255,255,255,0.08); backdrop-filter: blur(20px); border:1px solid rgba(255,255,255,0.2); border-radius:24px; box-shadow:0 15px 50px rgba(0,0,0,0.4); z-index:10;}
+.login-title{text-align:center;font-size:32px;font-weight:700;margin-bottom:10px;}
+.login-subtitle{text-align:center;font-size:14px;margin-bottom:35px;color:rgba(255,255,255,0.7); font-family: monospace; letter-spacing:1px;}
+
+/* INPUTS */
+.input-group{margin-bottom:20px;}
+.input-label{display:block;font-size:13px;margin-bottom:6px;color:rgba(255,255,255,0.9);}
+.input-field{ width:100%; padding:14px 18px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:white; font-size:15px; }
+.input-field::placeholder{color:rgba(255,255,255,0.5);}
+.input-field:focus{outline:none;background:rgba(255,255,255,0.15);border-color:#6DD5FA;box-shadow:0 0 0 3px rgba(109,213,250,0.2);}
+
+/* BOUTONS */
+.btn{width:100%;padding:16px;border-radius:12px;border:none;cursor:pointer;font-weight:600;font-size:16px;margin-top:20px;transition:all 0.3s ease;}
+.btn-login{background:linear-gradient(135deg,#6DD5FA,#2193b0);color:white;}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(109,213,250,0.4);}
+.btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.3);color:white;}
+.btn-secondary:hover{background:rgba(255,255,255,0.1);}
+</style>
+</head>
+<body>
+
+<!-- RAYONS LUMINEUX -->
+<div class="ray"></div>
+<div class="ray"></div>
+<div class="ray"></div>
+<div class="ray"></div>
+
+<!-- BULLES -->
+<div class="bubble"></div>
+<div class="bubble"></div>
+<div class="bubble"></div>
+
+<!-- ALGUES COURBÉES -->
+<div class="algae"></div>
+<div class="algae"></div>
+<div class="algae"></div>
+<div class="algae"></div>
+<div class="algae"></div>
+<div class="algae"></div>
+
+<!-- CARD LOGIN -->
+<div class="login-card">
+    <h1 class="login-title">🌊 Fishodoro</h1>
+    <p class="login-subtitle" id="scramble-text">Plongez dans la productivité</p>
+    
+    <form action="/" method="post">
+        <div class="input-group">
+            <label class="input-label">Nom d'utilisateur</label>
+            <input type="text" class="input-field" placeholder="fisher_pro" name="nom_utilisateur">
+        </div>
+        <div class="input-group">
+            <label class="input-label">Mot de passe</label>
+            <input type="password" class="input-field" placeholder="••••••••" name="mdp" required>
+        </div>
+        
+        <input class="btn btn-login" type="submit" name = "Envoi" value="Connexion"/>
+        
+        <input class="btn btn-secondary" type="submit" name = "Envoi" value="Inscription"/>
+    </form>
+</div>
+
+<script>
+/* ===== SCRAMBLE EFFECT ===== */
+const scrambleEl = document.getElementById('scramble-text');
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+const text = scrambleEl.textContent;
+let iterations = 0;
+
+function scramble() {
+    let scrambled = '';
+    for(let i=0;i<text.length;i++){
+        if(i < iterations){
+            scrambled += text[i];
+        } else {
+            scrambled += chars[Math.floor(Math.random()*chars.length)];
+        }
+    }
+    scrambleEl.textContent = scrambled;
+    iterations += 0.05;
+    if(iterations <= text.length){
+        requestAnimationFrame(scramble);
+    }
+}
+
+scramble();
+</script>
+</body>
+</html>

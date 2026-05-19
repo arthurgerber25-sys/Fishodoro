@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="static/icon.png" type="image/x-icon">
+<title>Fishodoro - Équipement</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Segoe UI',sans-serif;
+  min-height:100vh;
+  background: linear-gradient(180deg,#001022,#002244,#003366,#004080);
+  overflow:hidden;
+  color:white;
+}
+
+/* NAVIGATION */
+.nav-bar {
+    position: fixed; top: 2vh; left: 1.2vw;
+    display: flex; flex-direction: column; gap: 1.2vh;
+    z-index: 1500;
+}
+.nav-bar a { text-decoration: none; }
+.nav-btn {
+    padding: 1vh 1.5vw; border-radius: 2.5vh; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white; font-weight: 600; cursor: pointer;
+    transition: 0.3s; display: block; text-align: center; font-size: clamp(11px, 1vw, 15px);
+    white-space: nowrap;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(109,213,250,0.4); }
+.nav-btn.active { background: linear-gradient(135deg, #6DD5FA, #2193b0); }
+
+/* COMPTEUR POISSONS */
+.fish-counter {
+    position: fixed; top: 2vh; right: 2vw;
+    padding: 0.7vh 1.2vw 0.7vh 0.8vw;
+    background: rgba(0,8,35,0.6);
+    backdrop-filter: blur(14px);
+    border-radius: 50px;
+    border: 1px solid rgba(109,213,250,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    z-index: 2000;
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 800;
+    display: flex; align-items: center; gap: 0.5vw;
+}
+
+/* DÉCORS */
+.ray{position:absolute;top:-50%;width:12vw;height:250%;background:linear-gradient(180deg,rgba(130,220,255,0.2),transparent);transform:rotate(-15deg);animation:rayMove 10s ease-in-out infinite;}
+.ray:nth-child(1){left:5%;}.ray:nth-child(2){left:25%;animation-delay:2s;}.ray:nth-child(3){left:50%;animation-delay:4s;}.ray:nth-child(4){left:75%;animation-delay:6s;}.ray:nth-child(5){left:90%;animation-delay:3s;}
+@keyframes rayMove{0%,100%{opacity:0.3;transform:rotate(-15deg) translateX(0);}50%{opacity:0.6;transform:rotate(-15deg) translateX(20px);}}
+
+.bubble{position:absolute;bottom:-50px;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,0.8),rgba(130,220,255,0.2));border-radius:50%;animation:bubbleRise linear infinite;}
+.bubble:nth-child(6){left:10%;width:2vw;height:2vw;animation-duration:14s;}.bubble:nth-child(7){left:35%;width:1.5vw;height:1.5vw;animation-duration:12s;animation-delay:2s;}.bubble:nth-child(8){left:55%;width:2.2vw;height:2.2vw;animation-duration:16s;animation-delay:4s;}.bubble:nth-child(9){left:80%;width:1.2vw;height:1.2vw;animation-duration:10s;animation-delay:1s;}
+@keyframes bubbleRise{0%{bottom:-50px;opacity:0;}10%{opacity:0.6;}90%{opacity:0.6;}100%{bottom:110%;opacity:0;}}
+
+.algae{position:absolute;bottom:0;width:1.5vw;height:18vh;border-radius:20px 40px 20px 40px;transform-origin:bottom center;animation:sway 4s ease-in-out infinite alternate;}
+.algae::before{content:"";position:absolute;bottom:0;left:-0.8vw;width:1.5vw;height:14vh;background:inherit;border-radius:40px 20px 40px 20px;transform-origin:bottom center;animation:swayAlt 3.5s ease-in-out infinite alternate;}
+.algae::after{content:"";position:absolute;bottom:0;left:0.8vw;width:1.1vw;height:12vh;background:inherit;border-radius:30px 20px 30px 20px;transform-origin:bottom center;animation:swayAlt 4.2s ease-in-out infinite alternate;}
+.algae:nth-child(10){left:5%;}.algae:nth-child(11){left:20%;animation-delay:0.5s;}.algae:nth-child(12){left:35%;animation-delay:1s;}.algae:nth-child(13){left:50%;animation-delay:1.2s;}.algae:nth-child(14){left:65%;animation-delay:0.7s;}.algae:nth-child(15){left:80%;animation-delay:0.3s;}
+@keyframes sway{0%{transform:rotate(-12deg);}100%{transform:rotate(12deg);}}
+@keyframes swayAlt{0%{transform:rotate(-8deg);}100%{transform:rotate(8deg);}}
+
+.fish-bg{position:absolute;width:3vw;height:1.5vw;min-width:25px;min-height:12px;border-radius:20px;animation:swimWave linear infinite;}
+.fish-bg:nth-child(20){top:25%;left:-5vw;animation-duration:10s;}
+.fish-bg:nth-child(21){top:60%;left:-8vw;animation-duration:14s;animation-name:swimWaveR;}
+.fish-bg:nth-child(22){top:45%;left:-10vw;animation-duration:12s;}
+.fish-bg:nth-child(23){top:70%;left:-12vw;animation-duration:16s;animation-name:swimWaveR;}
+.fish-bg:nth-child(24){top:35%;left:-9vw;animation-duration:13s;}
+@keyframes swimWave{0%{transform:translateX(0);}100%{transform:translateX(130vw);}}
+@keyframes swimWaveR{0%{transform:translateX(0) translateY(0);}50%{transform:translateX(65vw) translateY(10px);}100%{transform:translateX(130vw) translateY(0);}}
+
+/* TITRE */
+.screen-title{
+  position:absolute;top:7vh;width:100%;text-align:center;
+  font-size:clamp(24px,3.5vw,52px);font-weight:700;
+  text-shadow:0 4px 20px rgba(0,0,0,0.5);z-index:10;
+}
+
+/* TABS */
+.tabs-container {
+    position: absolute; top: 16vh; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 1vw; z-index: 20;
+}
+.tab-btn {
+    padding: 0.8vh 2.5vw; border-radius: 2vh;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+    font-size: clamp(12px,1.1vw,16px); font-weight: 600; cursor: pointer;
+    transition: 0.25s;
+}
+.tab-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+.tab-btn.active { background: linear-gradient(135deg,#6DD5FA,#2193b0); color: white; border-color: transparent; }
+
+/* GRILLE ÉQUIPEMENTS */
+.equipment-container{
+  position:absolute;
+  top:54%; left:50%;
+  transform:translate(-50%,-50%);
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(130px,14vw,200px),1fr));
+  gap:2vw;
+  width: clamp(500px,75vw,900px);
+  max-height: 55vh;
+  overflow-y: visible;
+  padding: 0.5vh 0.5vw;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(109,213,250,0.4) transparent;
+}
+.equipment-container::-webkit-scrollbar { width: 5px; }
+.equipment-container::-webkit-scrollbar-track { background: transparent; }
+.equipment-container::-webkit-scrollbar-thumb { background: rgba(109,213,250,0.4); border-radius: 10px; }
+
+.equipment-item{
+  background:rgba(255,255,255,0.1); backdrop-filter:blur(15px);
+  border:2px solid rgba(255,255,255,0.15); border-radius:clamp(12px,1.5vw,22px);
+  padding:clamp(15px,2.5vh,30px) clamp(12px,1.5vw,25px);
+  text-align:center; transition:all 0.3s ease; cursor:pointer;
+  position: relative;
+}
+.equipment-item:hover{ transform:translateY(-8px); box-shadow:0 15px 40px rgba(0,0,0,0.4); }
+.equipment-item.equipped {
+    border-color: #6DD5FA;
+    box-shadow: 0 0 20px rgba(109,213,250,0.5);
+    background: rgba(109,213,250,0.12);
+}
+.equipped-badge {
+    position: absolute; top: 0.7vh; right: 0.7vw;
+    background: linear-gradient(135deg,#6DD5FA,#2193b0);
+    color: white; font-size: clamp(9px,0.75vw,11px); font-weight: 800;
+    padding: 0.2vh 0.6vw; border-radius: 1vh;
+}
+.item-icon-wrapper {
+    width: 100%; min-height: 70px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.5vh;
+}
+.equipment-item-name{ color:white; font-size:clamp(12px,1.1vw,17px); font-weight:600; margin-bottom:0.5vh; }
+.equipment-item-label{ color:rgba(255,255,255,0.55); font-size:clamp(10px,0.85vw,13px); }
+
+/* THÈME PREVIEW */
+.theme-preview {
+    width: 100%; height: 40px; border-radius: 0.8vh; margin-bottom: 1vh;
+    display: flex; gap: 4px; align-items: center; justify-content: center;
+    overflow: hidden;
+}
+.theme-swatch {
+    height: 100%; flex: 1; border-radius: 4px;
+}
+
+/* TOAST NOTIFICATION */
+.toast {
+    position: fixed; bottom: 5vh; left: 50%; transform: translateX(-50%);
+    padding: 1.2vh 2.5vw; border-radius: 2vh; color: white;
+    font-weight: 700; font-size: clamp(13px,1.1vw,17px);
+    z-index: 9999; opacity: 0; pointer-events: none;
+    animation: toastFade 2.8s ease forwards;
+}
+.toast.success { background: linear-gradient(135deg,#4CAF50,#2e7d32); }
+.toast.error   { background: linear-gradient(135deg,#FF6B6B,#c0392b); }
+@keyframes toastFade {
+    0%   { opacity:0; transform:translateX(-50%) translateY(10px); }
+    15%  { opacity:1; transform:translateX(-50%) translateY(0); }
+    70%  { opacity:1; }
+    100% { opacity:0; transform:translateX(-50%) translateY(-10px); }
+}
+</style>
+</head>
+<body>
+
+<!-- DÉCORS (couleur dynamique via JS) -->
+<div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div><div class="algae"></div>
+<div class="fish-bg"></div><div class="fish-bg"></div><div class="fish-bg"></div><div class="fish-bg"></div><div class="fish-bg"></div>
+
+<!-- NAVIGATION -->
+<div class="nav-bar">
+    <a href="/accueil" class="nav-btn">Accueil</a>
+    <a href="/stats" class="nav-btn">Stats</a>
+    <a href="/shop" class="nav-btn">Boutique</a>
+    <a href="/equipment" class="nav-btn active">Équipement</a>
+    <a href="/timer" class="nav-btn">Timer</a>
+    <a href="/aide" class="nav-btn">❓ Aide</a>
+</div>
+
+<!-- COMPTEUR POISSONS -->
+<div class="fish-counter">
+    <img src="{{ apparence['lien_image'] }}" alt="poisson"
+         style="width:32px; height:32px; image-rendering:pixelated; object-fit:contain; display:block;">
+    <span id="fish-count">{{ poissons | default(0) }}</span>
+</div>
+
+<h1 class="screen-title">Équipement</h1>
+
+<!-- TABS -->
+<div class="tabs-container">
+    <button class="tab-btn active" onclick="showTab('skins', this)">🐟 Skins</button>
+    <button class="tab-btn" onclick="showTab('themes', this)">🌊 Thèmes</button>
+</div>
+
+<!-- SKINS -->
+<div class="equipment-container" id="tab-skins">
+    {% for skin in skins_possedes %}
+    <div class="equipment-item {% if skin.id == skin_actuel_id %}equipped{% endif %}"
+         id="skin-item-{{ skin.id }}"
+         onclick="equiperItem({{ skin.id }}, 'skin')">
+        {% if skin.id == skin_actuel_id %}
+            <div class="equipped-badge">✓ Équipé</div>
+        {% endif %}
+        <div class="item-icon-wrapper">
+            <img src="{{ skin.lien }}"
+                 style="width:{{ skin.largeur }}px;height:{{ skin.hauteur }}px;image-rendering:pixelated;object-fit:contain;transform:scale({{ skin.zoom }});"
+                 alt="{{ skin.nom }}">
+        </div>
+        <div class="equipment-item-name">{{ skin.nom | replace('_', ' ') | title }}</div>
+        <div class="equipment-item-label">{% if skin.prix == 0 %}Gratuit{% else %}{{ skin.prix }} 🐟{% endif %}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- THÈMES -->
+<div class="equipment-container" id="tab-themes" style="display:none;">
+    {% for t in themes_possedes %}
+    <div class="equipment-item {% if t.id == theme_actuel_id %}equipped{% endif %}"
+         id="theme-item-{{ t.id }}"
+         onclick="equiperItem({{ t.id }}, 'theme')">
+        {% if t.id == theme_actuel_id %}
+            <div class="equipped-badge">✓ Actif</div>
+        {% endif %}
+        <div class="theme-preview">
+            {% for col in t.fish_colors[:4] %}
+            <div class="theme-swatch" style="background: linear-gradient(135deg, {{ col }});"></div>
+            {% endfor %}
+        </div>
+        <div class="equipment-item-name">{{ t.label }}</div>
+        <div class="equipment-item-label">{% if t.prix == 0 %}Gratuit{% else %}{{ t.prix }} 🐟{% endif %}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+const THEMES_DATA = {{ themes_possedes | tojson }};
+const themeActuelId = {{ theme_actuel_id }};
+
+// Appliquer le thème courant au chargement
+(function() {
+    const theme = THEMES_DATA.find(t => t.id === themeActuelId) || THEMES_DATA[0];
+    if (theme) applyTheme(theme);
+})();
+
+function applyTheme(theme) {
+    if (!theme) return;
+    const [c1, c2] = theme.algue_color.split(',');
+    document.querySelectorAll('.algae').forEach(el => {
+        el.style.background = `linear-gradient(to top, ${c1}, ${c2})`;
+    });
+    if (theme.bg_gradient) {
+        document.body.style.background = `linear-gradient(${theme.bg_gradient})`;
+    }
+    const fishEls = document.querySelectorAll('.fish-bg');
+    fishEls.forEach((el, i) => {
+        const fc = theme.fish_colors[i % theme.fish_colors.length].split(',');
+        el.style.background = `linear-gradient(135deg, ${fc[0]}, ${fc[1]})`;
+    });
+}
+
+function showTab(tab, btn) {
+    document.getElementById('tab-skins').style.display = tab === 'skins' ? 'grid' : 'none';
+    document.getElementById('tab-themes').style.display = tab === 'themes' ? 'grid' : 'none';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function equiperItem(itemId, category) {
+    fetch('/equiper', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id_item: itemId, category: category })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (category === 'skin') {
+                document.querySelectorAll('[id^="skin-item-"]').forEach(el => {
+                    el.classList.remove('equipped');
+                    const badge = el.querySelector('.equipped-badge');
+                    if (badge) badge.remove();
+                });
+                const el = document.getElementById('skin-item-' + itemId);
+                if (el) {
+                    el.classList.add('equipped');
+                    const badge = document.createElement('div');
+                    badge.className = 'equipped-badge';
+                    badge.textContent = '✓ Équipé';
+                    el.appendChild(badge);
+                }
+                // Mettre à jour le compteur skin
+                if (data.nouveau_skin) {
+                    const img = document.querySelector('.fish-counter img');
+                    if (img) {
+                        img.src = data.nouveau_skin.lien_image;
+                        img.style.width = data.nouveau_skin.largeur + 'px';
+                        img.style.height = data.nouveau_skin.hauteur + 'px';
+                        img.style.transform = 'scale(' + data.nouveau_skin.zoom + ')';
+                    }
+                }
+                toast('✅ Skin équipé !', 'success');
+            } else if (category === 'theme') {
+                document.querySelectorAll('[id^="theme-item-"]').forEach(el => {
+                    el.classList.remove('equipped');
+                    const badge = el.querySelector('.equipped-badge');
+                    if (badge) badge.remove();
+                });
+                const el = document.getElementById('theme-item-' + itemId);
+                if (el) {
+                    el.classList.add('equipped');
+                    const badge = document.createElement('div');
+                    badge.className = 'equipped-badge';
+                    badge.textContent = '✓ Actif';
+                    el.appendChild(badge);
+                }
+                if (data.nouveau_theme) applyTheme(data.nouveau_theme);
+                toast('🌊 Thème appliqué !', 'success');
+            }
+        } else {
+            toast(data.message || 'Erreur', 'error');
+        }
+    });
+}
+
+function toast(msg, type) {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+</script>
+</body>
+</html>

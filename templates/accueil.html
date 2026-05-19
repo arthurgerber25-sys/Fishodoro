@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="static\icon.png" type="image/x-icon">
+<title>Fishodoro - Accueil</title>
+<style>
+:root {
+    --nav-width: 9vw;
+    --card-radius: 1.8vw;
+    --gap: 1.2vh;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+    font-family:'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(180deg,#001022,#002244,#003366,#004080);
+    color: white;
+    overflow: hidden;
+}
+
+/* NAVIGATION */
+.nav-bar {
+    position: fixed; top: 2vh; left: 1.2vw;
+    display: flex; flex-direction: column; gap: var(--gap);
+    z-index: 1500;
+}
+.nav-bar a { text-decoration: none; }
+.nav-btn {
+    padding: 1vh 1.5vw; border-radius: 2.5vh; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white; font-weight: 600; cursor: pointer;
+    transition: 0.3s; display: block; text-align: center; font-size: clamp(11px, 1vw, 15px);
+    white-space: nowrap;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(109,213,250,0.4); }
+.nav-btn.active { background: linear-gradient(135deg, #6DD5FA, #2193b0); }
+
+/* DÉCORS */
+.ocean-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+.ray {
+    position: absolute; top: -50%; width: 10vw; height: 200%;
+    background: linear-gradient(180deg, rgba(130,220,255,0.15), transparent);
+    transform: rotate(-15deg); animation: rayMove 8s ease-in-out infinite;
+}
+.r1 {left:5%;} .r2 {left:30%; animation-delay:2s;} .r3 {left:60%; animation-delay:4s;} .r4 {left:85%; animation-delay:1s;}
+@keyframes rayMove {0%,100%{opacity:0.3;transform:rotate(-15deg) translateX(0);} 50%{opacity:0.6;transform:rotate(-15deg) translateX(20px);}}
+
+.bubble {
+    position: absolute; bottom: -50px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(130,220,255,0.2));
+    border-radius: 50%; animation: bubbleRise linear infinite;
+}
+.b1 {left:10%; width:2vw; height:2vw; animation-duration:14s;}
+.b2 {left:35%; width:1.2vw; height:1.2vw; animation-duration:12s; animation-delay:2s;}
+.b3 {left:55%; width:2.2vw; height:2.2vw; animation-duration:16s; animation-delay:4s;}
+.b4 {left:85%; width:1.5vw; height:1.5vw; animation-duration:10s; animation-delay:1s;}
+@keyframes bubbleRise {0%{bottom:-50px;opacity:0;} 10%{opacity:0.6;} 100%{bottom:110%;opacity:0;}}
+
+.algae {
+    position: absolute; bottom: 0; width: 1.5vw; height: 14vh;
+    background: linear-gradient(to top,#0a8f3b,#34c759);
+    border-radius: 20px 40px 20px 40px; transform-origin: bottom center;
+    animation: sway 4s ease-in-out infinite alternate;
+}
+.algae::before, .algae::after { content:""; position:absolute; bottom:0; background:inherit; border-radius:40px 20px; transform-origin:bottom center; }
+.algae::before { left:-0.8vw; width:1.5vw; height:10vh; animation:sway 3.5s ease-in-out infinite alternate-reverse; }
+.algae::after { left:0.8vw; width:1.1vw; height:9vh; animation:sway 4.2s ease-in-out infinite alternate; }
+.a1 {left:5%; height:15vh;} .a2 {left:20%; height:12vh; animation-delay:0.5s;} .a3 {left:80%; height:13vh; animation-delay:0.3s;}
+@keyframes sway {0%{transform:rotate(-12deg);} 100%{transform:rotate(12deg);}}
+
+/* COMPTEUR POISSONS */
+.fish-counter {
+    position: fixed; top: 2vh; right: 51vw;
+    padding: 0.7vh 1.2vw 0.7vh 0.8vw;
+    background: rgba(0,8,35,0.6);
+    backdrop-filter: blur(14px);
+    border-radius: 50px;
+    border: 1px solid rgba(109,213,250,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    z-index: 2000;
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 800;
+    display: flex; align-items: center; gap: 0.5vw;
+    letter-spacing: 0.5px;
+}
+
+/* DASHBOARD */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+}
+.left-zone { display: flex; align-items: center; justify-content: center; }
+
+.timer-card {
+    background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(25px);
+    border-radius: var(--card-radius); padding: 5vh 4vw; text-align: center; position: relative;
+    border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    width: clamp(280px, 38vw, 520px);
+}
+
+.fisherman {
+    width: 9.5vw;
+    height: 8vh;
+    position: absolute; bottom: 17.5vh; left:0.1vw;
+    image-rendering: pixelated;
+    object-fit: contain;
+    object-position: left center;
+    z-index: 2;
+    animation: fishermanSway 3s infinite alternate;
+}
+@keyframes fishermanSway { 0% { transform: translateY(0px); } 100% { transform: translateY(-4px); } }
+
+/* TIMER DISPLAY */
+.timer-display {
+    font-size: clamp(40px, 7vw, 90px);
+    font-weight: 700; font-family: monospace;
+    color: white; margin-bottom: 2vh; margin-top: 2vh;
+}
+
+/* BOUTONS DURÉE */
+.duration-btns {
+    display: flex; gap: 0.6vw; justify-content: center; margin-bottom: 1.5vh; flex-wrap: wrap;
+}
+.duration-btn {
+    padding: 0.6vh 1.1vw; border-radius: 2vh;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1); color: white;
+    font-size: clamp(11px, 1vw, 14px); font-weight: 600; cursor: pointer;
+    transition: 0.2s;
+}
+.duration-btn:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+.duration-btn.active { background: linear-gradient(135deg, #6DD5FA, #2193b0); border-color: transparent; }
+
+/* BOUTONS CONTRÔLE */
+.control-btn {
+    padding: 1.2vh 2vw; margin: 0.4vh 0.3vw;
+    border-radius: 2vh; border: none; color: white;
+    font-weight: 700; cursor: pointer; transition: 0.2s;
+    font-size: clamp(12px, 1.1vw, 16px);
+}
+.btn-start { background: #4CAF50; }
+.btn-pause { background: #FFB347; }
+.btn-stop { background: #FF6B6B; }
+.control-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+/* ZONE DROITE */
+.right-zone {
+    background: rgba(0,0,0,0.25); padding: 5vh 3vw;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    overflow-y: auto;
+}
+.task-item {
+    background: rgba(255,255,255,0.1); padding: 1.2vh 1.2vw;
+    border-radius: 1.2vh; display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 1.2vh;
+    border: 1px solid rgba(255,255,255,0.1); border-left: 5px solid #6DD5FA;
+    font-size: clamp(12px, 1.1vw, 16px);
+    cursor: pointer; transition: background 0.2s, opacity 0.2s;
+}
+.task-item:hover { background: rgba(255,255,255,0.16); }
+.task-item.done { opacity: 0.45; }
+.task-item.done .task-title { text-decoration: line-through; }
+.task-item button { font-size: clamp(16px, 1.4vw, 22px); flex-shrink: 0; }
+
+/* COULEURS PRIORITÉ */
+.task-item.priorite-0 { border-left-color: #8888aa; }
+.task-item.priorite-1 { border-left-color: #4CAF50; }
+.task-item.priorite-2 { border-left-color: #6DD5FA; }
+.task-item.priorite-3 { border-left-color: #FFB347; }
+.task-item.priorite-4 { border-left-color: #FF8C42; }
+.task-item.priorite-5 { border-left-color: #FF4444; }
+
+/* BADGE PHASE POMODORO */
+.phase-badge {
+    display: inline-block;
+    padding: 0.4vh 0.9vw;
+    border-radius: 1.5vh;
+    font-size: clamp(10px, 0.85vw, 13px);
+    font-weight: 700;
+    margin-left: 0.6vw;
+    vertical-align: middle;
+}
+.phase-travail { background: rgba(76,175,80,0.25); color: #4CAF50; border: 1px solid #4CAF50; }
+.phase-pause   { background: rgba(109,213,250,0.2); color: #6DD5FA; border: 1px solid #6DD5FA; }
+
+/* ============================
+   DRAWER
+   ============================ */
+
+.task-drawer {
+    position:fixed; top:1.8vh; right:-40vw;
+    width:clamp(280px,32vw,460px); height:100vh;
+    background:rgba(0,6,22,0.95); backdrop-filter:blur(30px);
+    border-left:1px solid rgba(109,213,250,0.15);
+    z-index:8000; transition:right 0.35s cubic-bezier(0.4,0,0.2,1);
+    display:flex; flex-direction:column; padding:4vh 2.5vw 3vh;
+    box-shadow:-8px 0 40px rgba(0,0,0,0.55);
+}
+.task-drawer.open { right:0; }
+ 
+.drawer-close {
+    position:absolute; top:1.8vh; right:1.2vw;
+    background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.13);
+    color:rgba(255,255,255,0.6); width:clamp(26px,2.2vw,36px); height:clamp(26px,2.2vw,36px);
+    border-radius:50%; font-size:clamp(11px,0.9vw,15px); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all 0.2s;
+}
+.drawer-close:hover { background:rgba(255,80,80,0.3); color:white; border-color:#FF6B6B; }
+ 
+/* ─ Squelettes shimmer ─ */
+.ph {
+    border-radius:6px;
+    background:linear-gradient(90deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.13) 50%,rgba(255,255,255,0.05) 100%);
+    background-size:200% 100%;
+    animation:shimmer 2s ease-in-out infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+ 
+.ph-badge   { height:clamp(20px,1.8vh,26px); width:clamp(90px,8vw,130px); border-radius:20px; margin-bottom:3vh;margin-top: 1vh; }
+.ph-title   { height:clamp(14px,1.6vh,22px); border-radius:5px; }
+.ph-label   { height:clamp(8px,0.9vh,12px);  border-radius:4px; opacity:0.45; }
+.ph-line    { height:clamp(9px,1vh,13px);    border-radius:4px; }
+.ph-icon    { width:clamp(18px,1.8vw,26px); height:clamp(18px,1.8vw,26px); border-radius:5px; flex-shrink:0; }
+.ph-date-txt{ height:clamp(10px,1.1vh,15px); width:clamp(80px,8vw,130px); border-radius:4px; }
+ 
+.ph-block {
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+    border-radius:1.2vh; padding:1.4vh 1.2vw; margin-bottom:2.2vh;
+}
+.ph-block.row { display:flex; align-items:center; gap:0.8vw; }
+.ph-block.col { display:flex; flex-direction:column; gap:0.7vh; }
+ 
+.drawer-sep { border:none; border-top:1px solid rgba(255,255,255,0.07); margin:auto 0 2.5vh; }
+ 
+.drawer-done-row { display:flex; align-items:center; gap:1vw; }
+.done-checkbox {
+    appearance:none; -webkit-appearance:none;
+    width:clamp(20px,1.8vw,26px); height:clamp(20px,1.8vw,26px);
+    border-radius:0.7vh; border:2px solid rgba(255,255,255,0.3);
+    background:rgba(255,255,255,0.06); cursor:pointer;
+    position:relative; transition:all 0.2s; flex-shrink:0;
+}
+.done-checkbox:hover   { border-color:#4CAF50; }
+.done-checkbox:checked { background:linear-gradient(135deg,#4CAF50,#2e7d32); border-color:#4CAF50; }
+.done-checkbox:checked::after {
+    content:"✓"; position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%); color:white;
+    font-size:clamp(11px,1.1vw,16px); font-weight:800;
+}
+.done-checkbox-label { font-size:clamp(12px,1vw,15px); font-weight:600; cursor:pointer; color:rgba(255,255,255,0.82); }
+
+/* MODALS */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px);
+    z-index: 9999; align-items: center; justify-content: center;
+}
+.glass-modal {
+    background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 2.5vh;
+    width: clamp(300px, 35vw, 500px); padding: 3.5vh 3vw;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+.glass-modal h2 { font-size: clamp(16px, 1.6vw, 22px); }
+.glass-modal input, .glass-modal textarea, .glass-modal select {
+    font-size: clamp(12px, 1vw, 15px);
+}
+
+/* GAIN POPUP */
+.fish-gain-popup {
+    position: fixed; top: 10vh; right: 2vw;
+    background: linear-gradient(135deg, #FFB347, #FF8C42);
+    color: white; font-weight: 800; font-size: clamp(14px, 1.3vw, 18px);
+    padding: 1.2vh 2vw; border-radius: 2vh;
+    box-shadow: 0 4px 20px rgba(255,140,66,0.5);
+    z-index: 9998; opacity: 0;
+    animation: popupFade 3s ease forwards;
+    pointer-events: none;
+}
+@keyframes popupFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    15% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+</style>
+</head>
+<body>
+
+<audio id="son" style="display:none">
+    <source src="{{ url_for('static', filename='son_end_timer.mp3') }}" type="audio/mpeg">
+</audio>
+
+<div class="ocean-bg">
+    <div class="ray r1"></div><div class="ray r2"></div><div class="ray r3"></div><div class="ray r4"></div>
+    <div class="bubble b1"></div><div class="bubble b2"></div><div class="bubble b3"></div><div class="bubble b4"></div>
+    <div class="algae a1"></div><div class="algae a2"></div><div class="algae a3"></div>
+</div>
+
+<div class="nav-bar">
+    <a href="/accueil" class="nav-btn active">Accueil</a>
+    <a href="/stats" class="nav-btn">Stats</a>
+    <a href="/shop" class="nav-btn">Boutique</a>
+    <a href="/equipment" class="nav-btn">Équipement</a>
+    <a href="/timer" class="nav-btn">Timer</a>
+    <a href="/aide" class="nav-btn">❓ Aide</a>
+</div>
+
+<!-- COMPTEUR POISSONS -->
+<div class="fish-counter">
+    <img src="{{ apparence['lien_image'] }}" alt="poisson"
+         style="width:32px; height:32px; image-rendering:pixelated; object-fit:contain; display:block;">
+    <span id="fish-count">{{ poissons | default(0) }}</span>
+</div>
+
+<div class="dashboard-grid">
+    <div class="left-zone">
+        <div class="timer-card">
+            <img id="fisherman-anim" class="fisherman" src="{{ url_for('static', filename='frame1_en_position.png') }}" alt="pêcheur">
+
+            <span id="phase-badge" class="phase-badge phase-travail">🎣 Travail</span>
+            <div id="display" class="timer-display">30:00</div>
+
+            <div class="duration-btns">
+                <button class="duration-btn active" onclick="changerDuree(30)">30 min</button>
+                <button class="duration-btn" onclick="changerDuree(55)">55 min</button>
+            </div>
+
+            <div>
+                <button onclick="commande('start')" class="control-btn btn-start">Start</button>
+                <button onclick="commande('pause')" class="control-btn btn-pause">Pause</button>
+                <button onclick="commande('stop')" class="control-btn btn-stop">Stop</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-zone">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3vh;">
+            <h2 style="font-size:clamp(20px, 2.5vw, 36px);">Journal de Pêche</h2>
+            <button onclick="ouvrirModalAdd()" style="background:#4CAF50; color:white; border:none; width:clamp(38px,3vw,54px); height:clamp(38px,3vw,54px); border-radius:50%; font-size:clamp(22px,2vw,32px); cursor:pointer; line-height:1;">+</button>
+        </div>
+        <div id="liste-taches">
+            {% for tache in taches %}
+            <div class="task-item priorite-{{ tache.priorite }}"
+                 id="task-{{ tache.id_tache }}"
+                 onclick="ouvrirDrawer(this)"
+                 data-id="{{ tache.id_tache }}"
+                 data-titre="{{ tache.titre_tache | e }}"
+                 data-desc="{{ tache.description_tache | default('', true) | e }}"
+                 data-date="{{ tache.date_fin | string | truncate(10, True, '') if tache.date_fin else '' }}"
+                 data-priorite="{{ tache.priorite }}">
+                <span class="task-title" style="font-weight:600;">🐟 {{ tache.titre_tache }}</span>
+                <button onclick="event.stopPropagation(); supprimerTache('{{ tache.id_tache }}')"
+                        style="background:none; border:none; color:#FF6B6B; cursor:pointer;">🗑</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- DRAWER -->
+<div class="task-drawer" id="taskDrawer">
+    <button class="drawer-close" onclick="fermerDrawer()">✕</button>
+ 
+    <!-- Badge priorité coloré -->
+    <div class="ph ph-badge" id="ph-badge"></div>
+ 
+    <!-- Titre : 2 barres de largeurs différentes -->
+    <div style="display:flex;flex-direction:column;gap:0.8vh;margin-bottom:3vh;font-weight:500;font-size: 30px;"id="titre-drawer">
+    </div>
+ 
+    <!-- Section description -->
+    <div class="" style="width:72px;margin-bottom:0.8vh;">Informations</div>
+    <div class="ph-block col">
+        <div id = "description-drawer"></div>
+    </div>
+ 
+    <!-- Section date -->
+    <div  style="width: 100px;margin-bottom:0.8vh;">Date de fin</div>
+    <div class="ph-block row">
+        <div style = "font-weight: 600;">📅</div>
+        <div id="date-drawer"></div>
+    </div>
+ 
+    <hr class="drawer-sep">
+ 
+    <div class="drawer-done-row">
+        <input type="checkbox" class="done-checkbox" id="drawer-done-cb" onchange="toggleDone()">
+        <label class="done-checkbox-label" for="drawer-done-cb">Marquer comme terminée</label>
+    </div>
+</div>
+
+<!-- MODAL AJOUT -->
+<div class="modal-overlay" id="modalAdd">
+    <div class="glass-modal">
+        <h2 style="text-align:center; margin-bottom:2vh;">🎣 Nouvelle Prise</h2>
+        <form onsubmit="envoyerTache(event)" style="display:flex; flex-direction:column; gap:1.5vh;">
+            <input type="text" name="titre_tache" placeholder="Nom de la tâche..." required style="padding:1.2vh 1vw; border-radius:1.2vh; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:white;">
+            <textarea name="description_tache" placeholder="Description..." rows="3" style="padding:1.2vh 1vw; border-radius:1.2vh; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:white; resize:none;"></textarea>
+            <input type="date" name="date_fin" required style="padding:1.2vh 1vw; border-radius:1.2vh; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:white;">
+            <select name="priorite" required style="appearance:none; padding:1.2vh 1vw; border-radius:1.2vh; border:1px solid rgba(255,255,255,0.2); background-color:rgba(255,255,255,0.1); color:white;">
+                <option value="" disabled selected hidden>Priorité...</option>
+                <option value="0" style="background:#1a1a1a;">0</option>
+                <option value="1" style="background:#1a1a1a;">1</option>
+                <option value="2" style="background:#1a1a1a;">2</option>
+                <option value="3" style="background:#1a1a1a;">3</option>
+                <option value="4" style="background:#1a1a1a;">4</option>
+                <option value="5" style="background:#1a1a1a;">5</option>
+            </select>
+            <button type="submit" style="padding:1.5vh; border-radius:1.5vh; border:none; background:linear-gradient(135deg, #6DD5FA, #2193b0); color:white; font-weight:700; cursor:pointer; font-size:clamp(13px,1.1vw,16px);">Lancer la ligne !</button>
+            <button type="button" onclick="fermerModalAdd()" style="background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; font-size:clamp(12px,1vw,14px);">Annuler</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL SUPPRESSION -->
+<div class="modal-overlay" id="modalDelete">
+    <div class="glass-modal" style="text-align: center;">
+        <h1 style="font-size:clamp(18px,2vw,28px); margin-bottom:1.5vh; font-weight:800;">Pris dans le filet !</h1>
+        <p style="font-size:clamp(13px,1.3vw,18px); opacity:0.9; margin-bottom:1vh;">Ce poisson a bien mordu...</p>
+        <p style="font-size:clamp(12px,1.1vw,16px); opacity:0.7; margin-bottom:3vh;">Tu veux vraiment le relâcher à la mer ?</p>
+        <div style="display:flex; gap:2vw; justify-content:center;">
+            <button onclick="fermerModalDelete()" style="flex:1; padding:1.5vh; border-radius:2vh; border:2px solid #6DD5FA; background:rgba(109,213,250,0.1); color:white; font-weight:700; cursor:pointer; font-size:clamp(12px,1vw,15px);">🌊 Garder</button>
+            <button id="confirmDeleteBtn" style="flex:1; padding:1.5vh; border-radius:2vh; border:none; background:#ff6b6b; color:white; font-weight:700; cursor:pointer; font-size:clamp(12px,1vw,15px);">🗑️ Supprimer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ========================
+   VARIABLES INITIALES
+   ======================== */
+let temps = {{ temps_restant }};
+let enCours = {{ 'true' if en_cours else 'false' }};
+enCours = (enCours === true || enCours === 'true');
+let phase = "{{ phase | default('travail') }}";
+let interval = null;
+let dureeActive = 30;
+let syncInterval = null;
+
+/* ========================
+   BADGE DE PHASE
+   ======================== */
+function getBadgePhase(p) {
+    if (p === "travail") return '<span class="phase-badge phase-travail">🎣 Travail</span>';
+    if (p === "pause_longue") return '<span class="phase-badge phase-pause">☕ Pause longue</span>';
+    return '<span class="phase-badge phase-pause">💧 Pause courte</span>';
+}
+function afficherBadgePhase(p) {
+    let badge = document.getElementById('phase-badge');
+    if (badge) badge.outerHTML = getBadgePhase(p);
+    else {
+        const display = document.getElementById('display');
+        const b = document.createElement('span');
+        b.id = 'phase-badge';
+        b.innerHTML = getBadgePhase(p);
+        display.parentNode.insertBefore(b, display);
+    }
+    document.querySelectorAll('.phase-badge').forEach(el => el.id = 'phase-badge');
+}
+
+/* ========================
+   AFFICHAGE DU TIMER
+   ======================== */
+function afficher(t) {
+    if (t === undefined) t = temps;
+    const min = Math.floor(t / 60);
+    const sec = Math.floor(t % 60);
+    document.getElementById('display').innerText =
+        String(min).padStart(2,'0') + ":" + String(sec).padStart(2,'0');
+}
+
+/* ========================
+   TIMER LOCAL (JS)
+   ======================== */
+function lancerLocal() {
+    if (interval) return;
+    interval = setInterval(() => {
+        if (temps > 0) { temps--; afficher(); }
+        else { clearInterval(interval); interval = null; sessionTerminee(); }
+    }, 1000);
+}
+function stopLocal() { clearInterval(interval); interval = null; }
+
+/* ========================
+   POLLING SYNCHRONISATION
+   ======================== */
+function demarrerSync() {
+    if (syncInterval) return;
+    syncInterval = setInterval(syncAvecServeur, 3000);
+}
+function stopSync() { clearInterval(syncInterval); syncInterval = null; }
+
+function syncAvecServeur() {
+    fetch('/etat_timer').then(r => r.json()).then(data => {
+        if (!enCours) {
+            temps = data.temps_restant; enCours = data.en_cours; phase = data.phase;
+            afficher(); afficherBadgePhase(phase);
+            if (enCours) lancerLocal();
+        }
+    });
+}
+
+/* ========================
+   FIN DE SESSION
+   ======================== */
+function sessionTerminee() {
+    const audio = document.getElementById('son');
+    audio.play(); audio.volume = 0.8;
+    fetch('/fin_session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ poissons_gagnes: dureeActive === 55 ? 55 : 30 })
+    })
+    .then(res => res.json())
+    .then(data => {
+        phase = data.phase; temps = data.temps_restant; enCours = false;
+        afficher(); afficherBadgePhase(phase);
+        if (data.c_etait_travail) {
+            document.getElementById('fish-count').textContent = data.nouveau_total;
+            afficherGainPopup(data.poissons_gagnes);
+            afficherNotifPhase('☕ Pause ! Tu as bien mérité un repos.', 'pause');
+        } else {
+            afficherNotifPhase('🎣 Pause terminée ! Prêt à reprendre ?', 'travail');
+        }
+    }).catch(() => {});
+}
+
+function afficherGainPopup(n) {
+    const popup = document.createElement('div');
+    popup.className = 'fish-gain-popup';
+    popup.textContent = `+${n} 🐟 Poissons gagnés !`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 3200);
+}
+
+function afficherNotifPhase(msg, type) {
+    const popup = document.createElement('div');
+    popup.style.cssText = `position:fixed; bottom:5vh; left:50%; transform:translateX(-50%);
+        padding:1.2vh 2.5vw; border-radius:2vh; color:white; font-weight:700;
+        font-size:clamp(13px,1.1vw,17px); z-index:9999; opacity:0;
+        animation:popupFade 3.5s ease forwards; pointer-events:none;
+        background:${type === 'pause' ? 'linear-gradient(135deg,#6DD5FA,#2193b0)' : 'linear-gradient(135deg,#4CAF50,#2e7d32)'};`;
+    popup.textContent = msg;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 3600);
+}
+
+/* ========================
+   COMMANDES TIMER
+   ======================== */
+function commande(action) {
+    const audio = document.getElementById('son'); audio.load();
+    fetch('/commande', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: action})
+    }).then(res => res.json()).then(data => {
+        temps = data.temps_restant; enCours = data.en_cours; phase = data.phase || phase;
+        afficher(); afficherBadgePhase(phase);
+        if (action === "start" && enCours) { lancerLocal(); demarrerSync(); }
+        if (action === "pause") stopLocal();
+        if (action === "stop") { stopLocal(); stopSync(); }
+        if (data.poissons !== undefined) document.getElementById('fish-count').textContent = data.poissons;
+    });
+}
+
+function changerDuree(minutes) {
+    dureeActive = minutes;
+    document.querySelectorAll('.duration-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    stopLocal(); stopSync();
+    fetch('/changer_duree', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ duree: minutes })
+    }).then(res => res.json()).then(data => {
+        temps = data.temps_restant; enCours = false; phase = data.phase || 'travail';
+        afficher(); afficherBadgePhase(phase);
+    });
+}
+
+afficher();
+afficherBadgePhase(phase);
+if (enCours) { lancerLocal(); demarrerSync(); }
+
+/* ── Animation pêcheur pixel art ── */
+(function() {
+    const frames = [
+        "{{ url_for('static', filename='frame1_en_position.png') }}",
+        "{{ url_for('static', filename='frame2_lancer.png') }}",
+        "{{ url_for('static', filename='frame3_affut.png') }}",
+        "{{ url_for('static', filename='frame4_touche.png') }}"
+    ];
+    let fi = 0;
+    const img = document.getElementById('fisherman-anim');
+    if (img) {
+        // précharger
+        frames.forEach(src => { const i = new Image(); i.src = src; });
+        setInterval(() => { fi = (fi + 1) % frames.length; img.src = frames[fi]; }, 300);
+    }
+})();
+
+/* ══════════════════════════════════════════
+   DRAWER
+   ══════════════════════════════════════════ */
+const P_COLORS = ['#8888aa','#4CAF50','#6DD5FA','#FFB347','#FF8C42','#FF4444'];
+const P_LABELS = ['Priorité 0','Priorité 1','Priorité 2','Priorité 3','Priorité 4','Priorité 5'];
+let currentDrawerTaskId = null;
+
+function ouvrirDrawer(el) {
+    currentDrawerTaskId = el.dataset.id;
+    const prio = parseInt(el.dataset.priorite);
+    const c = P_COLORS[prio] || P_COLORS[0];
+    const label = P_LABELS[prio] || 'Priorité ?';
+
+    // Badge priorité avec texte
+    const badge = document.getElementById('ph-badge');
+    badge.style.background = `${c}22`;
+    badge.style.border = `1px solid ${c}88`;
+    badge.style.color = c;
+    badge.style.animation = 'none';
+    badge.style.fontWeight = '700';
+    badge.style.fontSize = 'clamp(11px,1vw,14px)';
+    badge.style.padding = '0.08vh 1.7vw';
+    badge.textContent = label;
+
+    document.getElementById('drawer-done-cb').checked = el.classList.contains('done');
+    document.getElementById('taskDrawer').classList.add('open');
+    document.getElementById("titre-drawer").innerHTML = el.dataset.titre;
+    document.getElementById("date-drawer").innerHTML = el.dataset.date || '—';
+    document.getElementById("description-drawer").innerHTML = el.dataset.desc || '<span style="opacity:0.45;font-style:italic;">Aucune description</span>';
+}
+
+function fermerDrawer() {
+    document.getElementById('taskDrawer').classList.remove('open');
+    currentDrawerTaskId = null;
+}
+
+function toggleDone() {
+    if (!currentDrawerTaskId) return;
+    const cb = document.getElementById('drawer-done-cb');
+    const el = document.getElementById(`task-${currentDrawerTaskId}`);
+    if (el) el.classList.toggle('done', cb.checked);
+}
+
+document.addEventListener('click', e => {
+    const drawer = document.getElementById('taskDrawer');
+    if (drawer.classList.contains('open') &&
+        !drawer.contains(e.target) &&
+        !e.target.closest('.task-item')) fermerDrawer();
+});
+
+/* ========================
+   MODALS
+   ======================== */
+let idTacheASupprimer = null;
+
+function ouvrirModalAdd() { document.getElementById('modalAdd').style.display = 'flex'; }
+function fermerModalAdd() { document.getElementById('modalAdd').style.display = 'none'; }
+function fermerModalDelete() { document.getElementById('modalDelete').style.display = 'none'; idTacheASupprimer = null; }
+
+function envoyerTache(e) {
+    e.preventDefault();
+    fetch('/ajouter_tache', { method: 'POST', body: new FormData(e.target) })
+        .then(() => location.reload());
+}
+
+function supprimerTache(id) {
+    idTacheASupprimer = id;
+    fermerDrawer();
+    document.getElementById('modalDelete').style.display = 'flex';
+}
+
+document.getElementById('confirmDeleteBtn').onclick = function() {
+    if (idTacheASupprimer) {
+        fetch(`/supprimer_tache/${idTacheASupprimer}`, { method: 'POST' })
+            .then(() => {
+                document.getElementById(`task-${idTacheASupprimer}`).remove();
+                fermerModalDelete();
+            });
+    }
+};
+
+window.onclick = function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        fermerModalAdd();
+        fermerModalDelete();
+    }
+};
+</script>
+<script>
+/* ── Thème dynamique (fond + algues + poissons de fond) ── */
+(function() {
+    const theme = {{ theme | tojson }};
+    if (!theme || !theme.algue_color) return;
+    const [c1, c2] = theme.algue_color.split(',');
+    document.querySelectorAll('.algae').forEach(el => {
+        el.style.background = 'linear-gradient(to top, ' + c1 + ', ' + c2 + ')';
+    });
+    if (theme.bg_gradient) {
+        document.body.style.background = 'linear-gradient(' + theme.bg_gradient + ')';
+    }
+})();
+</script>
+</body>
+</html>
