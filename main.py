@@ -5,7 +5,6 @@ import threading
 from base_de_donnees_fonction import *
 from fonctions import *
 from statistiques import *
-import os
 
 app = Flask(__name__)
 app.secret_key = "cle_secrete_super_random_123"  # ⚠️ À remplacer par une variable d'environnement en production
@@ -67,18 +66,29 @@ def get_theme_by_id(theme_id):
 
 
 # ══════════════════════════════════════════════════════════════════
-#  ÉTAT GLOBAL DU SERVEUR
+#  ÉTAT GLOBAL DU SERVEUR  (un timer + une liste de tâches par utilisateur)
 # ══════════════════════════════════════════════════════════════════
 
-# Timer Pomodoro global (partagé entre tous les utilisateurs connectés)
-# ⚠️ Pour un usage multi-utilisateurs, il faudrait un timer par session Flask
-session_pomodoro = Session(1800)   # 1800 s = 30 minutes par défaut
+# Dictionnaires user_id → objet Session / ListeTache
+_timers: dict[int, Session]     = {}
+_listes: dict[int, ListeTache]  = {}
 
-# Liste de tâches en mémoire (rechargée depuis la BDD à chaque connexion)
-liste_taches = ListeTache()
-
-# Verrou pour protéger les accès concurrents au timer (thread-safe)
+# Verrou pour protéger les accès concurrents (thread-safe)
 _timer_lock = threading.Lock()
+
+
+def _get_timer(user_id: int) -> Session:
+    """Retourne le timer Pomodoro de l'utilisateur, le crée si inexistant."""
+    if user_id not in _timers:
+        _timers[user_id] = Session(1800)
+    return _timers[user_id]
+
+
+def _get_liste(user_id: int) -> ListeTache:
+    """Retourne la liste de tâches en mémoire de l'utilisateur, la crée si inexistante."""
+    if user_id not in _listes:
+        _listes[user_id] = ListeTache()
+    return _listes[user_id]
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -183,20 +193,6 @@ def _accorder_poissons(user_id: int, duree_secondes: int):
     return poissons_gagnes, nouveau
 
 
-def _etat_timer():
-    """Construit et retourne le dict d'état du timer (utilisé dans les réponses JSON).
-
-    Returns:
-        Dict avec : temps_restant, en_cours, phase, compteur_sessions.
-    """
-    return {
-        "temps_restant":      session_pomodoro.get_temps_restant(),
-        "en_cours":           session_pomodoro.sessions_en_cours,
-        "phase":              session_pomodoro.phase,
-        "compteur_sessions":  session_pomodoro.compteur_sessions,
-    }
-
-
 def build_apparence_dict(skin):
     """Construit le dict standardisé d'une apparence pour les templates et la session Flask.
 
@@ -289,8 +285,17 @@ def login():
                     session["user_id"]         = user.id_utilisateur
                     session["user_apparence"]  = build_apparence_dict(CATALOGUE_SKINS[0])
                     session["user_theme"]      = CATALOGUE_THEMES[0]
+                    session["themes_possedes"] = [101]
                     try:
-                        ajouter_en_bdd("Apparence_debloque", [(1, user.id_utilisateur)])  # Débloque le skin de base
+                        # Débloque le skin de base
+                        ajouter_en_bdd("Apparence_debloque", [(1, user.id_utilisateur)])
+                    except Exception:
+                        pass
+                    try:
+                        # Équipe le skin de base par défaut
+                        skin = CATALOGUE_SKINS[0]
+                        ajouter_en_bdd("Apparence_equipe",
+                                       [(skin["prix"], skin["id"], user.id_utilisateur, skin["type"])])
                     except Exception:
                         pass
                     return redirect(url_for("accueil"))
@@ -312,28 +317,31 @@ def accueil():
         return redirect(url_for("login"))
 
     nom = session.get("nom_utilisateur")
-    liste_taches.taches = []  # Réinitialisation de la liste en mémoire
+    user_id = session["user_id"]
+    timer = _get_timer(user_id)
+    lt = _get_liste(user_id)
+    lt.taches = []  # Réinitialisation de la liste en mémoire
 
     # Rechargement des tâches non terminées depuis la BDD
-    data = lire_en_bdd("Tache", "*", f"id_utilisateur = {session['user_id']} AND statut = 'A faire'")
+    data = lire_en_bdd("Tache", "*", f"id_utilisateur = {user_id} AND statut = 'A faire'")
     for t in data:
         tache_obj = Tache(
             titre_tache=t[1], description_tache=t[7],
             date_fin=t[2], id_utilisateur=t[6], priorite=t[3]
         )
         tache_obj.id_tache = t[0]
-        liste_taches.taches.append(tache_obj)
+        lt.taches.append(tache_obj)
 
-    taches = liste_taches.lister_taches()
+    taches = lt.lister_taches()
     theme  = get_theme_equipe()
 
     return render_template(
         "accueil.html",
         nom_utilisateur=nom,
         taches=taches,
-        temps_restant=session_pomodoro.get_temps_restant(),
-        en_cours=session_pomodoro.sessions_en_cours,
-        phase=session_pomodoro.phase,
+        temps_restant=timer.get_temps_restant(),
+        en_cours=timer.sessions_en_cours,
+        phase=timer.phase,
         poissons=get_poissons(),
         apparence=get_apparence_equipee(),
         theme=theme,
@@ -350,7 +358,13 @@ def etat_timer():
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
     with _timer_lock:
-        return jsonify(_etat_timer())
+        timer = _get_timer(session["user_id"])
+        return jsonify({
+            "temps_restant":     timer.get_temps_restant(),
+            "en_cours":          timer.sessions_en_cours,
+            "phase":             timer.phase,
+            "compteur_sessions": timer.compteur_sessions,
+        })
 
 
 @app.route("/ajouter_tache", methods=["POST"])
@@ -377,7 +391,7 @@ def ajouter_tache():
 
     tache = Tache(titre_tache=titre, description_tache=desc,
                   date_fin=date_fin, id_utilisateur=user_id, priorite=priorite)
-    liste_taches.ajouter_tache(tache)
+    _get_liste(user_id).ajouter_tache(tache)
 
     return jsonify({"id": tache.id_tache, "titre": tache.titre_tache, "description": tache.description_tache})
 
@@ -390,7 +404,7 @@ def supprimer_tache(id_tache: int):
     """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
-    liste_taches.supprimer_tache(id_tache)
+    _get_liste(session["user_id"]).supprimer_tache(id_tache)
     return jsonify({"status": "success"})
 
 
@@ -410,14 +424,20 @@ def commande():
     action = data.get("action")
 
     with _timer_lock:
+        timer = _get_timer(session["user_id"])
         if action == "start":
-            session_pomodoro.demarrer_chronometre()
+            timer.demarrer_chronometre()
         elif action == "pause":
-            session_pomodoro.pause_chronometre()
+            timer.pause_chronometre()
         elif action == "stop":
-            session_pomodoro.arret_chronometre()
-        etat = _etat_timer()
-        etat["poissons"] = get_poissons()
+            timer.arret_chronometre()
+        etat = {
+            "temps_restant":     timer.get_temps_restant(),
+            "en_cours":          timer.sessions_en_cours,
+            "phase":             timer.phase,
+            "compteur_sessions": timer.compteur_sessions,
+            "poissons":          get_poissons(),
+        }
 
     return jsonify(etat)
 
@@ -435,8 +455,14 @@ def changer_duree():
     duree_minutes  = int(data.get("duree", 30))
 
     with _timer_lock:
-        session_pomodoro.changer_duree_chronometre(duree_minutes)
-        etat = _etat_timer()
+        timer = _get_timer(session["user_id"])
+        timer.changer_duree_chronometre(duree_minutes)
+        etat = {
+            "temps_restant":     timer.get_temps_restant(),
+            "en_cours":          timer.sessions_en_cours,
+            "phase":             timer.phase,
+            "compteur_sessions": timer.compteur_sessions,
+        }
 
     return jsonify(etat)
 
@@ -459,13 +485,19 @@ def fin_session():
     poissons_gagnes_js = int(data.get("poissons_gagnes", 30))  # Valeur envoyée par le JS (non utilisée)
 
     with _timer_lock:
-        c_etait_travail = session_pomodoro.terminer_session_travail()
-        etat            = _etat_timer()
+        timer = _get_timer(user_id)
+        c_etait_travail = timer.terminer_session_travail()
+        etat = {
+            "temps_restant":     timer.get_temps_restant(),
+            "en_cours":          timer.sessions_en_cours,
+            "phase":             timer.phase,
+            "compteur_sessions": timer.compteur_sessions,
+        }
 
     if c_etait_travail and user_id:
         # Enregistrement en BDD et crédit de poissons
-        _enregistrer_session_bdd(user_id, session_pomodoro.duree_session)
-        _, nouveau_total = _accorder_poissons(user_id, session_pomodoro.duree_session)
+        _enregistrer_session_bdd(user_id, timer.duree_session)
+        _, nouveau_total = _accorder_poissons(user_id, timer.duree_session)
     else:
         # C'était une pause → pas d'enregistrement, pas de poissons
         nouveau_total      = get_poissons()
@@ -690,10 +722,11 @@ def fullscreen():
     if "nom_utilisateur" not in session:
         return redirect(url_for("login"))
     theme = get_theme_equipe()
+    timer = _get_timer(session["user_id"])
     return render_template(
         "fullscreen.html",
-        temps_restant=session_pomodoro.get_temps_restant(),
-        phase=session_pomodoro.phase,
+        temps_restant=timer.get_temps_restant(),
+        phase=timer.phase,
         poissons=get_poissons(),
         apparence=get_apparence_equipee(),
         theme=theme,
@@ -716,6 +749,18 @@ def aide():
                            logged_in="nom_utilisateur" in session)
 
 
+@app.route("/cheat/<int:montant>")
+def cheat(montant):
+    """Route de triche pour définir manuellement son solde de poissons.
+
+    ⚠️ À SUPPRIMER AVANT TOUT DÉPLOIEMENT EN PRODUCTION.
+    Exemple : GET /cheat/999 → attribue 999 poissons à l'utilisateur connecté.
+    """
+    user_id = session.get("user_id")
+    if not user_id:
+        return "Non connecté", 403
+    modifier_en_bdd("Poissons", f"nbr_poisson = {montant}", f"id_utilisateur = {user_id}")
+    return f"✅ Tu as maintenant {montant} poissons !", 200
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -723,5 +768,6 @@ def aide():
 # ══════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5555))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    # debug=True active le rechargement automatique et les messages d'erreur détaillés.
+    # ⚠️ Passer debug=False en production.
+    app.run(port=5555, debug=True)

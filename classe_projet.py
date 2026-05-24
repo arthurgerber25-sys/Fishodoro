@@ -84,8 +84,8 @@ class Utilisateur():
 
     def depenser_poissons(self, nbr_poisson_depense):
         """Déduit des poissons du solde et les comptabilise dans les dépenses."""
-        self.poisson -= nbr_poisson_depense          # Note : attribut mal nommé (devrait être self.poisson_utilisateur)
-        self.poisson_depense += nbr_poisson_depense  # Note : attribut mal nommé (devrait être self.poissons_depense)
+        self.poisson_utilisateur -= nbr_poisson_depense
+        self.poissons_depense += nbr_poisson_depense
 
     def equiper_apparence(self, apparence):
         """Équipe une apparence et la sauvegarde ou met à jour en BDD.
@@ -136,21 +136,10 @@ class Utilisateur():
             ajouter_en_bdd(nom_table_utilisateur,
                            [(self.id_utilisateur, self.nom_utilisateur, self.date_de_creation,
                              self.mot_de_passe, self.nbr_tache, self.nbr_session)])
-            ajouter_en_bdd(nom_table_apparence_equipe,
-                           [self.apparence_equipe[2], self.apparence_equipee[0],
-                            self.id_utilisateur, self.apparence_equipee[1]])
+            # apparence_equipee = résultat de lire_en_bdd("*") → liste de tuples
+            # On n'insère PAS dans Apparence_equipe à l'inscription (pas de skin équipé encore)
             return True
         else:
-            # Compte existant → mise à jour des compteurs et de l'apparence
-            ajouter_en_bdd(nom_table_poisson,
-                           [(self.poisson_utilisateur, self.poisson_utilisateur,
-                             self.id_utilisateur, self.poissons_depense)])
-            modifier_en_bdd(nom_table_utilisateur,
-                            f"nbr_session = {self.nbr_session}, nbr_tache = {self.nbr_tache}",
-                            f"id = {self.id_utilisateur}")
-            modifier_en_bdd(nom_table_apparence_equipe,
-                            f"prix = {self.apparence_equipee[2]}, id_apparence = {self.apparence_equipee[0]}, type = {self.apparence_equipee[1]}",
-                            f"id = {self.id_utilisateur}")
             return False
 
 
@@ -195,9 +184,7 @@ class ListeTache:
 
     def lister_taches(self):
         """Retourne les tâches en filtrant celles déjà marquées 'Fait'."""
-        for i in range(len(self.taches)):
-            if self.taches[i].statut == "Fait":
-                self.taches.pop(i)
+        self.taches = [t for t in self.taches if t.statut != "Fait"]
         return self.taches
 
     def sauvegarde(self, utilisateur: Utilisateur):

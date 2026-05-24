@@ -49,14 +49,14 @@ def calcul_temps_total(id_utilisateur: int):
     cmpt_courte = 0  # Nombre de sessions de 30 minutes
     cmpt_longue = 0  # Nombre de sessions de 55 minutes
 
-    if len(data) == 1:
-        pass  # Un seul enregistrement : on ne peut pas distinguer le type
-    else:
-        for session in data:
-            if int(session) == 1800:
-                cmpt_courte += 1
-            elif int(session) == 3300:
-                cmpt_longue += 1
+    if not data:
+        return "0h00"
+
+    for session in data:
+        if int(session) == 1800:
+            cmpt_courte += 1
+        elif int(session) == 3300:
+            cmpt_longue += 1
 
     total_secondes = cmpt_courte * 1800 + cmpt_longue * 3300
     total   = total_secondes // 3600          # Partie entière = heures
