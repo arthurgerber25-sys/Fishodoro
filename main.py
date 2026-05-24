@@ -295,7 +295,7 @@ def login():
                         # Équipe le skin de base par défaut
                         skin = CATALOGUE_SKINS[0]
                         ajouter_en_bdd("Apparence_equipe",
-                                       [(skin["prix"], skin["id"], user.id_utilisateur, skin["type"])])
+                                       [(user.id_utilisateur, skin["id"], skin["prix"], skin["type"])])
                     except Exception:
                         pass
                     return redirect(url_for("accueil"))
@@ -663,7 +663,7 @@ def equiper():
                                 f"id_apparence = {item_id}, prix = {skin['prix']}, type = '{skin['type']}'",
                                 f"id_utilisateur = {user_id}")
             else:
-                ajouter_en_bdd("Apparence_equipe", [(skin["prix"], item_id, user_id, skin["type"])])
+                ajouter_en_bdd("Apparence_equipe", [(user_id, item_id, skin["prix"], skin["type"])])
         except Exception as e:
             print(f"Erreur équipement BDD: {e}")
         return jsonify({"success": True, "nouveau_skin": build_apparence_dict(skin)})
@@ -682,7 +682,7 @@ def equiper():
                                 f"id_apparence = {item_id}, prix = {theme['prix']}",
                                 f"id_utilisateur = {user_id} AND type = 'theme'")
             else:
-                ajouter_en_bdd("Apparence_equipe", [(theme["prix"], item_id, user_id, "theme")])
+                ajouter_en_bdd("Apparence_equipe", [(user_id, item_id, theme["prix"], "theme")])
         except Exception as e:
             print(f"Erreur sauvegarde thème BDD: {e}")
         return jsonify({"success": True, "nouveau_theme": theme})
