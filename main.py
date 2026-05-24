@@ -5,20 +5,18 @@ import threading
 from base_de_donnees_fonction import *
 from fonctions import *
 from statistiques import *
+import os
 
 app = Flask(__name__)
-app.secret_key = "cle_secrete_super_random_123"  # ⚠️ À remplacer par une variable d'environnement en production
+app.secret_key = os.environ.get("SECRET_KEY", "cle_secrete_super_random_123")
 
 
 # ══════════════════════════════════════════════════════════════════
-#  CATALOGUES (chargés une seule fois au démarrage du serveur)
+#  CATALOGUES
 # ══════════════════════════════════════════════════════════════════
 
-# Skins de poissons disponibles en boutique, chargés depuis la BDD
 CATALOGUE_SKINS = recup_apparence()
 
-# Thèmes visuels disponibles (définis en dur dans le code)
-# Chaque thème modifie : couleur des algues, gradient de fond, couleurs des poissons de fond
 CATALOGUE_THEMES = [
     {"id": 101, "nom": "theme_ocean",   "label": "Océan Classique",   "prix": 0,
      "algue_color": "#0a8f3b,#34c759",
@@ -47,18 +45,14 @@ CATALOGUE_THEMES = [
 ]
 
 
-# ── Helpers de recherche dans les catalogues ──────────────────────────────────
-
 def get_skin_by_id(skin_id):
-    """Retourne le dict du skin correspondant à skin_id, ou le skin de base si introuvable."""
     for s in CATALOGUE_SKINS:
         if s["id"] == skin_id:
             return s
-    return CATALOGUE_SKINS[0]
+    return CATALOGUE_SKINS[0] if CATALOGUE_SKINS else {"id": 1, "lien": "/static/Skin_de_base.png", "hauteur": 45, "largeur": 45, "zoom": 1.0, "prix": 0, "type": "skin", "nom": "skin_de_base"}
 
 
 def get_theme_by_id(theme_id):
-    """Retourne le dict du thème correspondant à theme_id, ou le thème par défaut si introuvable."""
     for t in CATALOGUE_THEMES:
         if t["id"] == theme_id:
             return t
@@ -66,41 +60,31 @@ def get_theme_by_id(theme_id):
 
 
 # ══════════════════════════════════════════════════════════════════
-#  ÉTAT GLOBAL DU SERVEUR  (un timer + une liste de tâches par utilisateur)
+#  ÉTAT GLOBAL
 # ══════════════════════════════════════════════════════════════════
 
-# Dictionnaires user_id → objet Session / ListeTache
-_timers: dict[int, Session]     = {}
-_listes: dict[int, ListeTache]  = {}
-
-# Verrou pour protéger les accès concurrents (thread-safe)
+_timers: dict = {}
+_listes: dict = {}
 _timer_lock = threading.Lock()
 
 
 def _get_timer(user_id: int) -> Session:
-    """Retourne le timer Pomodoro de l'utilisateur, le crée si inexistant."""
     if user_id not in _timers:
         _timers[user_id] = Session(1800)
     return _timers[user_id]
 
 
 def _get_liste(user_id: int) -> ListeTache:
-    """Retourne la liste de tâches en mémoire de l'utilisateur, la crée si inexistante."""
     if user_id not in _listes:
         _listes[user_id] = ListeTache()
     return _listes[user_id]
 
 
 # ══════════════════════════════════════════════════════════════════
-#  HELPERS INTERNES
+#  HELPERS
 # ══════════════════════════════════════════════════════════════════
 
 def get_poissons():
-    """Lit le solde de poissons de l'utilisateur connecté directement en BDD.
-
-    Returns:
-        Entier (solde actuel), ou 0 si l'utilisateur n'est pas connecté.
-    """
     user_id = session.get("user_id")
     if user_id is None:
         return 0
@@ -109,7 +93,6 @@ def get_poissons():
 
 
 def set_poissons(nouveau_total: int):
-    """Met à jour le solde de poissons de l'utilisateur connecté en BDD."""
     user_id = session.get("user_id")
     if user_id is None:
         return
@@ -117,13 +100,6 @@ def set_poissons(nouveau_total: int):
 
 
 def get_apparences_debloquees_ids():
-    """Retourne la liste des IDs de skins débloqués par l'utilisateur connecté.
-
-    Le skin de base (id=1) est toujours inclus même s'il n'est pas en BDD.
-
-    Returns:
-        Liste d'entiers (IDs des apparences possédées).
-    """
     user_id = session.get("user_id")
     if user_id is None:
         return [1]
@@ -131,19 +107,13 @@ def get_apparences_debloquees_ids():
         result = lire_en_bdd("Apparence_debloque", "id_apparence", f"id_utilisateur = {user_id}")
         ids = list(result) if result else []
         if 1 not in ids:
-            ids.append(1)   # Le skin de base est toujours disponible
+            ids.append(1)
         return ids
     except Exception:
         return [1]
 
 
 def get_apparence_equipee():
-    """Retourne le dict de l'apparence actuellement équipée depuis la session Flask.
-
-    Returns:
-        Dict avec clés : id, lien_image, hauteur, largeur, zoom.
-        Valeurs par défaut (skin de base) si aucune apparence n'est stockée en session.
-    """
     return session.get("user_apparence", {
         "id": 1,
         "lien_image": "/static/Skin_de_base.png",
@@ -152,40 +122,23 @@ def get_apparence_equipee():
 
 
 def get_theme_equipe():
-    """Retourne le thème actif depuis la session Flask.
-
-    Returns:
-        Dict du thème (voir CATALOGUE_THEMES), ou le thème par défaut.
-    """
     return session.get("user_theme", CATALOGUE_THEMES[0])
 
 
 def _enregistrer_session_bdd(user_id: int, duree_secondes: int):
-    """Enregistre une session Pomodoro complétée en BDD.
-
-    Génère un ID unique basé sur le timestamp. Les erreurs sont capturées
-    et logguées sans interrompre le flux de l'application.
-    """
     try:
         id_session = int(datetime.datetime.now().timestamp() * 1000) % 1000000
         date_fait = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ajouter_en_bdd("Session", [(id_session, duree_secondes, date_fait, 1, user_id)])
+        # Session : (id, duree, date_fait, statut, id_utilisateur)
+        # duree stocké en TEXT dans ta BDD → on passe une string
+        ajouter_en_bdd("Session", [(id_session, str(duree_secondes), date_fait, 1, user_id)])
     except Exception as e:
         print(f"[BDD] Erreur enregistrement session : {e}")
 
 
 def _accorder_poissons(user_id: int, duree_secondes: int):
-    """Crédite les poissons gagnés à la fin d'une session de travail.
-
-    Gains :
-        Session courte (1800 s / 30 min) → 30 poissons
-        Session longue (3300 s / 55 min) → 55 poissons
-
-    Returns:
-        Tuple (poissons_gagnes, nouveau_total).
-    """
     gains = {1800: 30, 3300: 55}
-    poissons_gagnes = gains.get(duree_secondes, 30)  # 30 par défaut si durée inconnue
+    poissons_gagnes = gains.get(duree_secondes, 30)
     result = lire_en_bdd("Poissons", "nbr_poisson", f"id_utilisateur = {user_id}")
     ancien = result[0] if result else 0
     nouveau = ancien + poissons_gagnes
@@ -194,38 +147,21 @@ def _accorder_poissons(user_id: int, duree_secondes: int):
 
 
 def build_apparence_dict(skin):
-    """Construit le dict standardisé d'une apparence pour les templates et la session Flask.
-
-    Gère les deux cas de nommage possible : "lien" (BDD) ou "lien_image" (session).
-
-    Args:
-        skin : Dict brut d'un skin (issu du CATALOGUE_SKINS ou de la BDD).
-
-    Returns:
-        Dict normalisé avec clés : id, lien_image, hauteur, largeur, zoom.
-    """
     return {
-        "id":        skin.get("id", 1),
+        "id":         skin.get("id", 1),
         "lien_image": skin.get("lien", skin.get("lien_image", "/static/Skin_de_base.png")),
-        "hauteur":   skin.get("hauteur", 45),
-        "largeur":   skin.get("largeur", 45),
-        "zoom":      skin.get("zoom", 1.0),
+        "hauteur":    skin.get("hauteur", 45),
+        "largeur":    skin.get("largeur", 45),
+        "zoom":       skin.get("zoom", 1.0),
     }
 
 
 # ══════════════════════════════════════════════════════════════════
-#  ROUTES FLASK
+#  ROUTES
 # ══════════════════════════════════════════════════════════════════
 
 @app.route("/", methods=["GET", "POST"])
 def login():
-    """Page de connexion / inscription.
-
-    GET  → Affiche le formulaire.
-    POST → Traite la connexion ou l'inscription selon le bouton "Envoi" cliqué.
-           En cas de succès, charge les données de l'utilisateur dans la session Flask
-           et redirige vers la page d'accueil.
-    """
     if request.method == "POST":
         nom = request.form.get("nom_utilisateur")
         mdp = request.form.get("mdp")
@@ -235,15 +171,14 @@ def login():
 
             if request.form.get("Envoi") == "Connexion":
                 if connexion(user):
-                    # Stocke les informations clés en session Flask
                     session["nom_utilisateur"] = user.nom_utilisateur
                     session["user_id"]         = user.id_utilisateur
 
-                    # Chargement du skin équipé depuis la BDD
-                    skin_equipe = CATALOGUE_SKINS[0]
+                    skin_equipe = CATALOGUE_SKINS[0] if CATALOGUE_SKINS else None
                     try:
                         row = lire_en_bdd("Apparence_equipe", "*", f"id_utilisateur = {user.id_utilisateur}")
                         if row:
+                            # Apparence_equipe : (id_utilisateur, id_apparence, prix, type)
                             id_app = row[0][1]
                             for s in CATALOGUE_SKINS:
                                 if s["id"] == id_app:
@@ -251,9 +186,8 @@ def login():
                                     break
                     except Exception:
                         pass
-                    session["user_apparence"] = build_apparence_dict(skin_equipe)
+                    session["user_apparence"] = build_apparence_dict(skin_equipe) if skin_equipe else {"id": 1, "lien_image": "/static/Skin_de_base.png", "hauteur": 45, "largeur": 45, "zoom": 1.0}
 
-                    # Chargement du thème équipé depuis la BDD
                     theme_equipe = CATALOGUE_THEMES[0]
                     try:
                         row_theme = lire_en_bdd("Apparence_equipe", "id_apparence",
@@ -264,13 +198,12 @@ def login():
                         pass
                     session["user_theme"] = theme_equipe
 
-                    # Chargement des thèmes possédés
                     try:
                         rows_themes = lire_en_bdd("Apparence_debloque", "id_apparence",
                                                    f"id_utilisateur = {user.id_utilisateur}")
-                        themes_ids = [r for r in rows_themes if r >= 101]  # Les thèmes ont des IDs ≥ 101
+                        themes_ids = [r for r in rows_themes if r >= 101]
                         if 101 not in themes_ids:
-                            themes_ids.append(101)  # Thème de base toujours disponible
+                            themes_ids.append(101)
                         session["themes_possedes"] = themes_ids
                     except Exception:
                         session["themes_possedes"] = [101]
@@ -283,16 +216,14 @@ def login():
                 if inscription(user):
                     session["nom_utilisateur"] = nom
                     session["user_id"]         = user.id_utilisateur
-                    session["user_apparence"]  = build_apparence_dict(CATALOGUE_SKINS[0])
+                    session["user_apparence"]  = build_apparence_dict(CATALOGUE_SKINS[0]) if CATALOGUE_SKINS else {"id": 1, "lien_image": "/static/Skin_de_base.png", "hauteur": 45, "largeur": 45, "zoom": 1.0}
                     session["user_theme"]      = CATALOGUE_THEMES[0]
                     session["themes_possedes"] = [101]
                     try:
-                        # Débloque le skin de base
                         ajouter_en_bdd("Apparence_debloque", [(1, user.id_utilisateur)])
                     except Exception:
                         pass
                     try:
-                        # Équipe le skin de base par défaut
                         skin = CATALOGUE_SKINS[0]
                         ajouter_en_bdd("Apparence_equipe",
                                        [(user.id_utilisateur, skin["id"], skin["prix"], skin["type"])])
@@ -307,12 +238,6 @@ def login():
 
 @app.route("/accueil")
 def accueil():
-    """Page principale : affiche les tâches en cours et l'état du timer.
-
-    Recharge les tâches "A faire" depuis la BDD à chaque visite pour
-    rester synchronisé avec les modifications faites dans d'autres onglets.
-    Redirige vers /login si l'utilisateur n'est pas connecté.
-    """
     if "nom_utilisateur" not in session:
         return redirect(url_for("login"))
 
@@ -320,10 +245,10 @@ def accueil():
     user_id = session["user_id"]
     timer = _get_timer(user_id)
     lt = _get_liste(user_id)
-    lt.taches = []  # Réinitialisation de la liste en mémoire
+    lt.taches = []
 
-    # Rechargement des tâches non terminées depuis la BDD
-    data = lire_en_bdd("Tache", "*", f"id_utilisateur = {user_id} AND statut = 'A faire'")
+    # statut = 0 (INTEGER) pour "A faire" dans ta BDD
+    data = lire_en_bdd("Tache", "*", f"id_utilisateur = {user_id} AND statut = 0")
     for t in data:
         tache_obj = Tache(
             titre_tache=t[1], description_tache=t[7],
@@ -350,11 +275,6 @@ def accueil():
 
 @app.route("/etat_timer")
 def etat_timer():
-    """Endpoint JSON : retourne l'état actuel du timer (polling côté client).
-
-    Le front-end interroge cette route régulièrement pour mettre à jour
-    l'affichage du compte à rebours en temps réel.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
     with _timer_lock:
@@ -369,13 +289,6 @@ def etat_timer():
 
 @app.route("/ajouter_tache", methods=["POST"])
 def ajouter_tache():
-    """Endpoint pour créer une nouvelle tâche via le formulaire de l'accueil.
-
-    Lit les champs du formulaire, crée un objet Tache et le persiste en BDD.
-
-    Returns:
-        JSON : {id, titre, description} de la tâche créée.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
 
@@ -398,10 +311,6 @@ def ajouter_tache():
 
 @app.route("/supprimer_tache/<int:id_tache>", methods=["POST"])
 def supprimer_tache(id_tache: int):
-    """Marque une tâche comme terminée ("Fait") en BDD et la retire de la liste mémoire.
-
-    L'ID de la tâche est passé dans l'URL.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
     _get_liste(session["user_id"]).supprimer_tache(id_tache)
@@ -410,14 +319,6 @@ def supprimer_tache(id_tache: int):
 
 @app.route("/commande", methods=["POST"])
 def commande():
-    """Endpoint pour contrôler le timer (start / pause / stop).
-
-    Reçoit un JSON {"action": "start"|"pause"|"stop"} et applique l'action
-    sur l'objet session_pomodoro global.
-
-    Returns:
-        JSON : état du timer + solde de poissons.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
     data   = request.get_json()
@@ -444,11 +345,6 @@ def commande():
 
 @app.route("/changer_duree", methods=["POST"])
 def changer_duree():
-    """Endpoint pour modifier la durée de la session de travail (30 ou 55 minutes).
-
-    Reçoit un JSON {"duree": N} avec N en minutes.
-    Réinitialise complètement le timer avec la nouvelle durée.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
     data           = request.get_json()
@@ -469,20 +365,12 @@ def changer_duree():
 
 @app.route("/fin_session", methods=["POST"])
 def fin_session():
-    """Endpoint appelé par le front-end quand le timer arrive à 0.
-
-    Gère la transition de phase (travail → pause, ou pause → travail).
-    Si c'était une session de travail : enregistre en BDD et crédite les poissons.
-
-    Returns:
-        JSON : état du timer + poissons_gagnes + nouveau_total + c_etait_travail.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
 
     user_id            = session.get("user_id")
     data               = request.get_json()
-    poissons_gagnes_js = int(data.get("poissons_gagnes", 30))  # Valeur envoyée par le JS (non utilisée)
+    poissons_gagnes_js = int(data.get("poissons_gagnes", 30))
 
     with _timer_lock:
         timer = _get_timer(user_id)
@@ -495,33 +383,26 @@ def fin_session():
         }
 
     if c_etait_travail and user_id:
-        # Enregistrement en BDD et crédit de poissons
         _enregistrer_session_bdd(user_id, timer.duree_session)
         _, nouveau_total = _accorder_poissons(user_id, timer.duree_session)
     else:
-        # C'était une pause → pas d'enregistrement, pas de poissons
         nouveau_total      = get_poissons()
         poissons_gagnes_js = 0
 
-    etat["nouveau_total"]      = nouveau_total
-    etat["poissons_gagnes"]    = poissons_gagnes_js if c_etait_travail else 0
-    etat["c_etait_travail"]    = c_etait_travail
+    etat["nouveau_total"]   = nouveau_total
+    etat["poissons_gagnes"] = poissons_gagnes_js if c_etait_travail else 0
+    etat["c_etait_travail"] = c_etait_travail
 
     return jsonify(etat)
 
 
 @app.route("/shop")
 def shop():
-    """Page boutique : affiche les skins et thèmes disponibles à l'achat.
-
-    Marque chaque item comme "owned" (possédé) ou "cant-afford" (pas assez de poissons)
-    pour que le template affiche les états corrects.
-    """
     if "nom_utilisateur" not in session:
         return redirect(url_for("login"))
 
-    possedes_ids   = get_apparences_debloquees_ids()
-    theme          = get_theme_equipe()
+    possedes_ids    = get_apparences_debloquees_ids()
+    theme           = get_theme_equipe()
     themes_possedes = session.get("themes_possedes", [101])
 
     items_skins = [
@@ -544,14 +425,6 @@ def shop():
 
 @app.route("/acheter", methods=["POST"])
 def acheter():
-    """Endpoint JSON pour acheter un skin ou un thème en boutique.
-
-    Vérifie que l'utilisateur a assez de poissons, déduit le prix,
-    enregistre l'achat en BDD et met à jour la session Flask.
-
-    Returns:
-        JSON : {success: bool, nouveau_total: int} ou {success: False, message: str}.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
 
@@ -591,11 +464,10 @@ def acheter():
     else:
         return jsonify({"success": False, "message": "Catégorie inconnue"})
 
-    # Met à jour le compteur de poissons dépensés
     try:
-        result = lire_en_bdd("Poissons", "poisson_depense", f"id_utilisateur = {user_id}")
+        result = lire_en_bdd("Poissons", "poissons_depense", f"id_utilisateur = {user_id}")
         depense_actuel = result[0] if result else 0
-        modifier_en_bdd("Poissons", f"poisson_depense = {depense_actuel + prix}", f"id_utilisateur = {user_id}")
+        modifier_en_bdd("Poissons", f"poissons_depense = {depense_actuel + prix}", f"id_utilisateur = {user_id}")
     except Exception:
         pass
 
@@ -604,10 +476,6 @@ def acheter():
 
 @app.route("/equipment")
 def equipment():
-    """Page d'équipement : affiche les skins et thèmes possédés pour les équiper.
-
-    Filtre les catalogues pour ne montrer que les items que l'utilisateur possède.
-    """
     if "nom_utilisateur" not in session:
         return redirect(url_for("login"))
 
@@ -618,8 +486,8 @@ def equipment():
     skins_possedes       = [s for s in CATALOGUE_SKINS   if s["id"] in possedes_ids]
     themes_possedes_list = [t for t in CATALOGUE_THEMES  if t["id"] in themes_possedes]
 
-    skin_actuel_id   = get_apparence_equipee().get("id", 1)
-    theme_actuel_id  = theme.get("id", 101)
+    skin_actuel_id  = get_apparence_equipee().get("id", 1)
+    theme_actuel_id = theme.get("id", 101)
 
     return render_template("equipment.html",
                            nom_utilisateur=session["nom_utilisateur"],
@@ -634,14 +502,6 @@ def equipment():
 
 @app.route("/equiper", methods=["POST"])
 def equiper():
-    """Endpoint JSON pour équiper un skin ou un thème possédé.
-
-    Met à jour la session Flask et la BDD (table Apparence_equipe)
-    pour persister le choix entre les connexions.
-
-    Returns:
-        JSON : {success: True, nouveau_skin/nouveau_theme} ou {success: False, message}.
-    """
     if "nom_utilisateur" not in session:
         return jsonify({"error": "Non autorisé"}), 403
 
@@ -657,11 +517,12 @@ def equiper():
         skin = get_skin_by_id(item_id)
         session["user_apparence"] = build_apparence_dict(skin)
         try:
-            existe = lire_en_bdd("Apparence_equipe", "id_utilisateur", f"id_utilisateur = {user_id}")
+            existe = lire_en_bdd("Apparence_equipe", "id_utilisateur",
+                                 f"id_utilisateur = {user_id} AND type = 'skin'")
             if existe:
                 modifier_en_bdd("Apparence_equipe",
-                                f"id_apparence = {item_id}, prix = {skin['prix']}, type = '{skin['type']}'",
-                                f"id_utilisateur = {user_id}")
+                                f"id_apparence = {item_id}, prix = {skin['prix']}",
+                                f"id_utilisateur = {user_id} AND type = 'skin'")
             else:
                 ajouter_en_bdd("Apparence_equipe", [(user_id, item_id, skin["prix"], skin["type"])])
         except Exception as e:
@@ -692,22 +553,16 @@ def equiper():
 
 @app.route("/stats")
 def stats():
-    """Page statistiques : génère et injecte les 4 graphes matplotlib en SVG.
-
-    Les graphes sont générés à chaque requête (pas de cache).
-    Pour de meilleures performances avec beaucoup d'utilisateurs,
-    envisager de mettre en cache les SVG générés.
-    """
     if "nom_utilisateur" not in session:
         return redirect(url_for("login"))
     theme = get_theme_equipe()
 
     return render_template("stats.html",
                            nom_utilisateur=session["nom_utilisateur"],
-                           graphe1=temps_total_travailles(session["user_id"]),    # Barres : heures/jour
-                           graphe2=camembert_tache(session["user_id"]),            # Camembert : priorités
-                           graphe3=graphe_session_pomodoro(session["user_id"]),    # Courbe : sessions cumulées
-                           graphe4=graphe_tache(session["user_id"]),               # Courbe : tâches cumulées
+                           graphe1=temps_total_travailles(session["user_id"]),
+                           graphe2=camembert_tache(session["user_id"]),
+                           graphe3=graphe_session_pomodoro(session["user_id"]),
+                           graphe4=graphe_tache(session["user_id"]),
                            temps_total=calcul_temps_total(session["user_id"]),
                            session_total=max_session_compteur(session["user_id"]),
                            tache_total=max_tache_compteur(session["user_id"]),
@@ -718,7 +573,6 @@ def stats():
 
 @app.route("/timer")
 def fullscreen():
-    """Page timer plein écran : affichage simplifié du Pomodoro sans les tâches."""
     if "nom_utilisateur" not in session:
         return redirect(url_for("login"))
     theme = get_theme_equipe()
@@ -735,11 +589,7 @@ def fullscreen():
 
 @app.route("/aide")
 def aide():
-    """Page d'aide : accessible même sans être connecté.
-
-    Fournit les données de thème et d'apparence pour maintenir la cohérence visuelle.
-    """
-    apparence = get_apparence_equipee() if "nom_utilisateur" in session else build_apparence_dict(CATALOGUE_SKINS[0])
+    apparence = get_apparence_equipee() if "nom_utilisateur" in session else build_apparence_dict(CATALOGUE_SKINS[0]) if CATALOGUE_SKINS else {"id": 1, "lien_image": "/static/Skin_de_base.png", "hauteur": 45, "largeur": 45, "zoom": 1.0}
     theme     = get_theme_equipe()      if "nom_utilisateur" in session else CATALOGUE_THEMES[0]
     return render_template("aide.html",
                            nom_utilisateur=session.get("nom_utilisateur", ""),
@@ -751,11 +601,6 @@ def aide():
 
 @app.route("/cheat/<int:montant>")
 def cheat(montant):
-    """Route de triche pour définir manuellement son solde de poissons.
-
-    ⚠️ À SUPPRIMER AVANT TOUT DÉPLOIEMENT EN PRODUCTION.
-    Exemple : GET /cheat/999 → attribue 999 poissons à l'utilisateur connecté.
-    """
     user_id = session.get("user_id")
     if not user_id:
         return "Non connecté", 403
@@ -763,11 +608,5 @@ def cheat(montant):
     return f"✅ Tu as maintenant {montant} poissons !", 200
 
 
-# ══════════════════════════════════════════════════════════════════
-#  POINT D'ENTRÉE
-# ══════════════════════════════════════════════════════════════════
-
 if __name__ == "__main__":
-    # debug=True active le rechargement automatique et les messages d'erreur détaillés.
-    # ⚠️ Passer debug=False en production.
     app.run(port=5555, debug=True)
