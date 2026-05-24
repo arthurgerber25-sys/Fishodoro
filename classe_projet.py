@@ -107,7 +107,7 @@ class Utilisateur():
         else:
             ajouter_en_bdd(
                 nom_table_apparence_equipe,
-                [(apparence.prix, apparence.id_apparence, self.id_utilisateur, apparence.type)]
+                [(self.id_utilisateur, apparence.id_apparence, apparence.prix, apparence.type)]
             )
 
     def sauvegarde(self):
@@ -131,8 +131,8 @@ class Utilisateur():
         if verif_id == []:
             # Nouveau compte → insertion dans toutes les tables liées
             ajouter_en_bdd(nom_table_poisson,
-                           [(self.poisson_utilisateur, self.poisson_utilisateur,
-                             self.id_utilisateur, self.poissons_depense)])
+                           [(self.id_utilisateur, self.poisson_utilisateur,
+                             self.poisson_utilisateur, self.poissons_depense)])
             ajouter_en_bdd(nom_table_utilisateur,
                            [(self.id_utilisateur, self.nom_utilisateur, self.date_de_creation,
                              self.mot_de_passe, self.nbr_tache, self.nbr_session)])
